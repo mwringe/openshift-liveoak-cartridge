@@ -52,8 +52,8 @@ Provides:
 # Providing the openjdk binary with the liveoak binary for now
 # Remove when an official openjdk binary is available on OpenShift and we can use 'Requires' to fetch it
 # Requires not supported for non-official cartridges
-#Requires:
-#  - java-1.8.0
+Requires:
+  - mongo
 Publishes:
   publish-http-url:
     Type: "NET_TCP:httpd-proxy-info"
