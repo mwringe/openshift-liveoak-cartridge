@@ -53,7 +53,7 @@ Provides:
 # Remove when an official openjdk binary is available on OpenShift and we can use 'Requires' to fetch it
 # Requires not supported for non-official cartridges
 Requires:
-  - mongo
+  - mongodb
 Publishes:
   publish-http-url:
     Type: "NET_TCP:httpd-proxy-info"
