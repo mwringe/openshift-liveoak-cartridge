@@ -3,15 +3,20 @@
 <div class="col-md-10 lo-main-pane">
   <div class="row">
     <div class="lo-content-area col-md-9">
+      <ul class="nav nav-tabs nav-tabs-pf">
+        <li class="active"><a href="">Policies</a></li>
+        <li><a href="#/applications/{{curApp.id}}/security/roles">Roles</a></li>
+        <li class="disabled"><a href="">Users</a></li>
+      </ul>
 
       <lo-breadcrumbs></lo-breadcrumbs>
       
-      <h2><span>{{curApp.name}}</span> Security</h2>
-      
+      <h2><span>{{curApp.name}}</span> Policies</h2>
+
       <!-- In case of no collections secured -->
       <div class="panel" ng-hide="securedColls.length > 0">
         <div class="panel-body text-center empty-instance">
-          <i class="fa fa-unlock"></i>
+          <i class="fa fa-lock"></i>
 
           <span ng-hide="unsecuredColls.length > 0">
             <p>This application has no collections to be secured. Create a collection inside a storage resource first.</p>
@@ -61,7 +66,6 @@
       
       <ul>
         <li ng-repeat="c in unsecuredColls">
-          <i class="fa fa-unlock translucid"></i>
           <a href="#/applications/{{curApp.name}}/storage/{{c.storage}}/browse/{{c.collection}}">{{c.collection}}</a>
           <a class="btn-icon" href="#/applications/{{curApp.name}}/security/{{c.storage}}/{{c.collection}}" data-tooltip-placement="top" data-tooltip="Secure this Collection">
             <i class="fa fa-lock"></i>

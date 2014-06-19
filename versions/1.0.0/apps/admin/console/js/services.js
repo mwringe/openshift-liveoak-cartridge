@@ -139,6 +139,10 @@ loMod.factory('LoCollection', function($resource) {
     storageId : '@storageId',
     collectionId : '@collectionId'
   }, {
+    get : {
+      method : 'GET',
+      params: { appId : '@appId', storageId : '@storageId', collectionId: '@collectionId'}
+    },
     getList : {
       method : 'GET',
       params: { expand : 'members' }
@@ -385,6 +389,26 @@ loMod.factory('LoRealmClientRolesLoader', function(Loader, LoRealmClientRoles, $
   return Loader.query(LoRealmClientRoles, function() {
     return {
       realmId: 'liveoak-apps',
+      appId : $route.current.params.appId
+    };
+  });
+});
+
+
+loMod.factory('LoSecurityCollections', function($resource) {
+  return $resource('/:appId', {
+    appId : '@appId'
+  }, {
+    get : {
+      method: 'GET',
+      params: { expand : 'members' }
+    }
+  });
+});
+
+loMod.factory('LoSecurityCollectionsLoader', function(Loader, LoSecurityCollections, $route) {
+  return Loader.get(LoSecurityCollections, function() {
+    return {
       appId : $route.current.params.appId
     };
   });

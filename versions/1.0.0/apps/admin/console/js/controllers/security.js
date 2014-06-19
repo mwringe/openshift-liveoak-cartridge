@@ -9,7 +9,7 @@ loMod.controller('SecurityListCtrl', function($scope, $rootScope, $location, $lo
   $scope.breadcrumbs = [
     {'label': 'Applications', 'href': '#/applications'},
     {'label': currentApp.name, 'href': '#/applications/' + currentApp.id},
-    {'label': 'Security', 'href': '#/applications/' + currentApp.id + '/security'}
+    {'label': 'Security Policies', 'href': '#/applications/' + currentApp.id + '/security'}
   ];
 
   $scope.storageList = $filter('filter')(expApp._members, {'type': 'database'});
@@ -61,27 +61,33 @@ loMod.controller('SecurityListCtrl', function($scope, $rootScope, $location, $lo
   };
 });
 
-loMod.controller('SecurityCtrl', function($scope, $rootScope, $location, $route, $log, $filter, $modal, Notifications, LoSecurity, LoACL, currentCollectionList, loRealmAppRoles, uriPolicies, aclPolicies, currentApp) {
+loMod.controller('SecurityCtrl', function($scope, $rootScope, $location, $route, $log, $filter, $modal, Notifications, LoSecurity, LoACL, loRealmAppRoles, uriPolicies, aclPolicies, currentApp, loStorageList) {
 
   $rootScope.curApp = currentApp;
 
-  $scope.currentStorage = $route.current.params.storageId;
-  $scope.currentCollection = $route.current.params.collectionId;
+  $scope.currentCollection = $route.current.params.storageId + '/' + $route.current.params.collectionId;
 
   $scope.breadcrumbs = [
     {'label': 'Applications', 'href': '#/applications'},
     {'label': currentApp.name, 'href': '#/applications/' + currentApp.id},
     {'label': 'Security', 'href': '#/applications/' + currentApp.id + '/security'},
-    {'label': 'Secure ' + $scope.currentStorage + '/' + $scope.currentCollection, 'href': '#/applications/' + currentApp.id + '/security/...'}
+    {'label': 'Secure ' + $scope.currentCollection, 'href': '#/applications/' + currentApp.id + '/security/' + $scope.currentCollection}
   ];
 
-  $scope.collectionsList = currentCollectionList._members;
+  $scope.storageList = $filter('filter')(loStorageList._members, {'type': 'database'});
 
-  $scope.$watch('currentCollection',  function(/*newVal*/) {
-    $location.path('applications/' + currentApp.id + '/security/' + $route.current.params.storageId + '/' + $scope.currentCollection);
+  $scope.collectionsList = [];
+  angular.forEach($scope.storageList, function(storage) {
+    angular.forEach(storage._members, function(collection) {
+      $scope.collectionsList.push({id: storage.id + '/' + collection.id, name: storage.id + ' / ' + collection.id});
+    });
   });
 
-  var userPath = '/' + currentApp.id + '/' + $scope.currentStorage + '/' + $scope.currentCollection;
+  $scope.$watch('currentCollection',  function(/*newVal*/) {
+    $location.path('applications/' + currentApp.id + '/security/' + $scope.currentCollection);
+  });
+
+  var userPath = '/' + currentApp.id + '/' + $scope.currentCollection;
   var superuserPath = userPath + '/*';
 
   var newUriPolicyRule = function(uriPattern, requestTypes, allowedRoles) {
@@ -207,11 +213,11 @@ loMod.controller('SecurityCtrl', function($scope, $rootScope, $location, $route,
       }
     }
 
-    if(!hasUserRead) { uriPolicies.rules.push(newUriPolicyRule(userPath, ['READ'], $scope.settings.accessRoles)) };
-    if(!hasUserCreate) { uriPolicies.rules.push(newUriPolicyRule(userPath, ['CREATE'], $scope.settings.createEntryRoles)) };
-    if(!hasSuperRead) { uriPolicies.rules.push(newUriPolicyRule(superuserPath, ['READ'], $scope.settings.readAllRoles)) };
-    if(!hasSuperUpdate) { uriPolicies.rules.push(newUriPolicyRule(superuserPath, ['UPDATE'], $scope.settings.updateAllRoles)) };
-    if(!hasSuperDelete) { uriPolicies.rules.push(newUriPolicyRule(superuserPath, ['DELETE'], $scope.settings.deleteAllRoles)) };
+    if(!hasUserRead) { uriPolicies.rules.push(newUriPolicyRule(userPath, ['READ'], $scope.settings.accessRoles)); }
+    if(!hasUserCreate) { uriPolicies.rules.push(newUriPolicyRule(userPath, ['CREATE'], $scope.settings.createEntryRoles)); }
+    if(!hasSuperRead) { uriPolicies.rules.push(newUriPolicyRule(superuserPath, ['READ'], $scope.settings.readAllRoles)); }
+    if(!hasSuperUpdate) { uriPolicies.rules.push(newUriPolicyRule(superuserPath, ['UPDATE'], $scope.settings.updateAllRoles)); }
+    if(!hasSuperDelete) { uriPolicies.rules.push(newUriPolicyRule(superuserPath, ['DELETE'], $scope.settings.deleteAllRoles)); }
 
     var uriSuccess = function(value/*, responseHeaders*/) {
       settingsBackup.accessRoles = $scope.settings.accessRoles;
@@ -227,7 +233,7 @@ loMod.controller('SecurityCtrl', function($scope, $rootScope, $location, $route,
     };
 
     var uriFailure = function (httpResponse) {
-      Notifications.error('Unable to update the application URI Policies.', httpResponse);
+      Notifications.error('Failed to update the application URI Policies.', httpResponse);
     };
 
     if (newUriPolicies) {
@@ -259,7 +265,7 @@ loMod.controller('SecurityCtrl', function($scope, $rootScope, $location, $route,
       Notifications.success('The application ACL Policies have been updated.');
     };
     var aclFailure = function (httpResponse) {
-      Notifications.error('Unable to update the application ACL Policies.', httpResponse);
+      Notifications.error('Failed to update the application ACL Policies.', httpResponse);
     };
 
     if(newAclPolicies) {
@@ -272,3 +278,175 @@ loMod.controller('SecurityCtrl', function($scope, $rootScope, $location, $route,
   };
 
 });
+
+// -- Security Policies --------------------------------------------------------
+
+loMod.controller('SecurityRolesCtrl', function($scope, $rootScope, $log, $route, $modal, currentApp, LoRealmApp, LoRealmAppRoles, loRealmApp, /*loRealmAppRoles,*/ Notifications) {
+
+  $rootScope.curApp = currentApp;
+
+  $scope.breadcrumbs = [
+    {'label': 'Applications', 'href': '#/applications'},
+    {'label': currentApp.name, 'href': '#/applications/' + currentApp.id},
+    {'label': 'Security Roles', 'href': '#/applications/' + currentApp.id + '/security/roles'}
+  ];
+
+  // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
+  var loRealmAppRoles;
+  LoRealmAppRoles.query({appId: currentApp.id}).$promise.then(function(data) {
+      loRealmAppRoles = data;
+      resetEnv();
+    }
+  );
+
+  var settingsBackup = {};
+  var resetEnv = function() {
+    $scope.settings = {
+      roles: loRealmAppRoles,
+      defaultRoles: angular.copy(loRealmApp.defaultRoles) || [],
+      deletedRoles: [],
+      newRoles: []
+    };
+    settingsBackup = angular.copy($scope.settings);
+  };
+
+  $scope.$watch('settings', function() {
+    $scope.changed = !angular.equals($scope.settings, settingsBackup);
+  }, true);
+
+  $scope.clear = function() {
+    $scope.settings = angular.copy(settingsBackup);
+    $scope.changed = false;
+  };
+
+  $scope.toggleDefaultRole = function(roleName) {
+    var idx = $scope.settings.defaultRoles.indexOf(roleName);
+    if (idx > -1) {
+      $scope.settings.defaultRoles.splice(idx, 1);
+    }
+    else {
+      $scope.settings.defaultRoles.push(roleName);
+    }
+  };
+
+  $scope.toggleDeletedRole = function(roleName) {
+    var idx = $scope.settings.deletedRoles.indexOf(roleName);
+    if (idx > -1) {
+      $scope.settings.deletedRoles.splice(idx, 1);
+    }
+    else {
+      $scope.settings.deletedRoles.push(roleName);
+    }
+  };
+
+  var AddRoleModalCtrl = function ($scope, $modalInstance, Notifications, LoRealmAppRoles, roles) {
+
+    $scope.newRole = new LoRealmAppRoles();
+
+    $scope.addRole = function () {
+      for(var i = 0; i < roles.length; i++) {
+        if(roles[i].name === $scope.newRole.name) {
+          Notifications.error('The role with name "' + $scope.newRole.name + '" already exists.');
+          return;
+        }
+      }
+
+      $modalInstance.close($scope.newRole);
+    };
+
+    $scope.cancel = function () {
+      $modalInstance.dismiss('cancel');
+    };
+
+  };
+
+  $scope.modalAddRole = function() {
+    var modalAddRole = $modal.open({
+      templateUrl: '/admin/console/templates/modal/application/role-add.html',
+      controller: AddRoleModalCtrl,
+      scope: $scope,
+      resolve: {
+        roles: function () {
+          return $scope.settings.roles.concat($scope.settings.newRoles);
+        }
+      }
+    });
+
+    modalAddRole.result.then(
+      function(newRole) { // modal completion
+        $scope.settings.newRoles.push(newRole);
+      }
+    );
+  };
+
+  $scope.pendingTasks = -1;
+
+  $scope.$watch('pendingTasks', function (newVal, oldVal/*, scope*/) {
+    if(oldVal === 1 && newVal === 0) {
+      $route.reload();
+    }
+  });
+
+  $scope.save = function() {
+    // check newly added and simultaneously deleted roles..
+    // we are going backwards so splice won't affect the index we are working at
+    var idx = $scope.settings.newRoles.length;
+    while (idx--) {
+      var deletedIdx = $scope.settings.deletedRoles.indexOf($scope.settings.newRoles[idx]);
+      if (deletedIdx !== -1) {
+        $scope.settings.deletedRoles.splice(deletedIdx, 1);
+        $scope.settings.newRoles.splice(idx, 1);
+      }
+    }
+
+    var defaultRolesChanged = !angular.equals(loRealmApp.defaultRoles, $scope.settings.defaultRoles);
+    $scope.pendingTasks = $scope.settings.deletedRoles.length + $scope.settings.newRoles.length + defaultRolesChanged;
+
+    var deleteRoleSuccessCallback = function(value) {
+      $scope.pendingTasks--;
+      Notifications.success('The application role "' +  value.name + '" has been deleted.');
+    };
+
+    var deleteRoleFailureCallback = function(httpResponse) {
+      $scope.pendingTasks--;
+      Notifications.error('Unable to delete the application role "' +  httpResponse.config.data.name + '".', httpResponse);
+    };
+
+    for (var drIdx = 0; drIdx < $scope.settings.deletedRoles.length; drIdx++) {
+      $scope.settings.deletedRoles[drIdx].$delete({realmId: 'liveoak-apps', appId: currentApp.id, roleName: $scope.settings.deletedRoles[drIdx].name},
+        deleteRoleSuccessCallback, deleteRoleFailureCallback
+      );
+    }
+
+    var addRoleSuccessCallback = function(value) {
+      $scope.pendingTasks--;
+      Notifications.success('The application role "' + value.name + '" has been created.');
+    };
+
+    var addRoleFailureCallback = function(httpResponse) {
+      $scope.pendingTasks--;
+      Notifications.error('Unable to create the application role "' + httpResponse.config.data.name + '".', httpResponse);
+    };
+
+    for (var nrIdx = 0; nrIdx < $scope.settings.newRoles.length; nrIdx++) {
+      $scope.settings.newRoles[nrIdx].$save({realmId: 'liveoak-apps', appId: currentApp.id},
+        addRoleSuccessCallback, addRoleFailureCallback
+      );
+    }
+
+    if (!angular.equals(loRealmApp.defaultRoles, $scope.settings.defaultRoles)) {
+      loRealmApp.defaultRoles = $scope.settings.defaultRoles;
+      loRealmApp.$save({realmId: 'liveoak-apps', appId: currentApp.id},
+        function(value/*, responseHeaders*/) {
+          $scope.pendingTasks--;
+          Notifications.success('The application default roles have been set to: "' + value.defaultRoles + '".');
+        },
+        function (httpResponse) {
+          $scope.pendingTasks--;
+          Notifications.error('Unable to configure the application default roles.', httpResponse);
+        }
+      );
+    }
+  };
+});
+
