@@ -5,8 +5,8 @@
       db: "liveoak",
       servers: [
           {
-            host: '${jboss.bind.address}',
-            port: 27017
+            host: '${mongo.host}',
+            port: ${mongo.port}
           }
       ]
     }
