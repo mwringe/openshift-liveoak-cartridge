@@ -55,27 +55,29 @@ Provides:
 Requires:
   - mongodb
 Publishes:
-  publish-http-url:
-    Type: "NET_TCP:httpd-proxy-info"
-  publish-liveoak-cluster:
-    Type: NET_TCP:liveoak-cluster-info
+#  publish-http-url:
+#    Type: "NET_TCP:httpd-proxy-info"
+#  publish-liveoak-cluster:
+#    Type: NET_TCP:liveoak-cluster-info
 Subscribes:
   set-env:
     Type: "ENV:*"
     Required: false
-  set-mysql-connection-info:
-    Type: "NET_TCP:db:mysql"
-    Required : false
-  set-postgres-connection-info:
-    Type: "NET_TCP:db:postgres"
-    Required : false
-  set-doc-url:
-    Type: "STRING:urlpath"
-    Required : false
-  set-generic-java:
-    Type: "ENV:NET_TCP:generic-java"
-  set-liveoak-cluster:
-    Type: NET_TCP:liveoak-cluster-info
+  set-nosql-db-connection-info:
+    Type: ENV:NET_TCP:nosqldb:connection-info
+#  set-mysql-connection-info:
+#    Type: "NET_TCP:db:mysql"
+#    Required : false
+#  set-postgres-connection-info:
+#    Type: "NET_TCP:db:postgres"
+#    Required : false
+#  set-doc-url:
+#    Type: "STRING:urlpath"
+#    Required : false
+#  set-generic-java:
+#    Type: "ENV:NET_TCP:generic-java"
+#  set-liveoak-cluster:
+#    Type: NET_TCP:liveoak-cluster-info
 Scaling:
   Min: 1
   Max: 1
