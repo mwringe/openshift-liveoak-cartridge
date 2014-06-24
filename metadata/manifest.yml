@@ -49,7 +49,7 @@ Endpoints:
     Protocols:
     - http
     - ws
-Mappings:
+    Mappings:
     - Frontend: ''
       Backend: ''
       Options:
