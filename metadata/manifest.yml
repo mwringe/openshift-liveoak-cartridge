@@ -65,6 +65,7 @@ Subscribes:
     Required: false
   set-nosql-db-connection-info:
     Type: ENV:NET_TCP:nosqldb:connection-info
+    Required: true
 #  set-mysql-connection-info:
 #    Type: "NET_TCP:db:mysql"
 #    Required : false
