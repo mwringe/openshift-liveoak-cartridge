@@ -164,7 +164,7 @@ loMod.controller('AppListCtrl', function($scope, $routeParams, $location, $modal
                 type: 'mongo',
                 config: {
                   db: $scope.appModel.id,
-                  servers: [{host: '<%= ENV['OPENSHIFT_LIVEOAK_IP'] %>', port: 27017}],
+                  servers: [{host: '<%= ENV['OPENSHIFT_MONGODB_DB_HOST'] %>', port: <%= ENV['OPENSHIFT_MONGODB_DB_PORT'] %>}],
                   credentials: []
                 }
               };
