@@ -54,6 +54,8 @@ Provides:
 # Requires not supported for non-official cartridges
 #Requires:
 #  - java-1.8.0
+Requires:
+  - mongo
 Publishes:
   publish-http-url:
     Type: "NET_TCP:httpd-proxy-info"

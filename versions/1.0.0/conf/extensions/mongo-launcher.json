@@ -1,7 +1,7 @@
 {
   "module-id" : "io.liveoak.mongo-launcher",
   "config" : {
-    "enabled" : "auto",
+    "enabled" : "false",
     "use-small-files" : true,
     "host" : "${jboss.bind.address}",
     "mongod-path" : "/usr/bin/mongod",
