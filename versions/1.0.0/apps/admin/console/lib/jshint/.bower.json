@@ -1,0 +1,14 @@
+{
+  "name": "jshint",
+  "homepage": "https://github.com/jshint/jshint",
+  "version": "2.5.8",
+  "_release": "2.5.8",
+  "_resolution": {
+    "type": "version",
+    "tag": "2.5.8",
+    "commit": "53556a7e6a4f6a7bb1bee6e83a229e0481b782b9"
+  },
+  "_source": "git://github.com/jshint/jshint.git",
+  "_target": "*",
+  "_originalSource": "jshint"
+}

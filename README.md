@@ -3,7 +3,7 @@
 
 # OpenShift LiveOak Cartridge
 
-This cartridge is running a snapshot of LiveOak 1.0.0.Alpha01
+This cartridge is running a snapshot of LiveOak 1.0.0.Beta02. The LiveOak website can be located at www.liveoak.io
 
 This cartridge is originally based on the Wildfly cartridge found in OpenShift Origin [here](https://github.com/openshift/origin-server/tree/master/cartridges/openshift-origin-cartridge-jbossas).  
 

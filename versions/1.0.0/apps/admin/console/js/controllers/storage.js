@@ -2,7 +2,7 @@
 
 var loMod = angular.module('loApp.controllers.storage', []);
 
-loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $log, LoStorage, loStorage, Notifications, currentApp) {
+loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $routeParams, $log, LoStorage, loStorage, Notifications, currentApp) {
 
   $log.debug('StorageCtrl');
 
@@ -21,13 +21,17 @@ loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $log, Lo
   $scope.changed = false;
 
   $scope.create = true;
+  $scope.fix = $routeParams.fix;
 
   if (loStorage.id){
     $scope.create = false;
     if (loStorage.credentials.length === 0 ){
       loStorage.credentials = [{'mechanism':'MONGODB-CR'}];
     }
-    $scope.breadcrumbs.push({'label': loStorage.id, 'href':'#/applications/' + currentApp.id + '/storage/' + loStorage.id});
+    $scope.breadcrumbs.push(
+      {'label': loStorage.id, 'href':'#/applications/' + currentApp.id + '/storage/' + loStorage.id},
+      {'label': 'Settings', 'href':'#/applications/' + currentApp.id + '/storage/' + loStorage.id}
+    );
   }
   else {
     $scope.breadcrumbs.push({'label': 'New Storage', 'href':'#/applications/' + currentApp.id + '/storage/create-storage'});
@@ -36,9 +40,18 @@ loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $log, Lo
   var storageModelBackup = angular.copy(loStorage);
   $scope.storageModel = angular.copy(loStorage);
 
+  $scope.passwordInputType = 'password';
+  $scope.changePasswordInputType = function() {
+    if ($scope.passwordInputType === 'password') {
+      $scope.passwordInputType = 'text';
+    }
+    else {
+      $scope.passwordInputType = 'password';
+    }
+  };
+
   $scope.clear = function(){
     $scope.storageModel = angular.copy(storageModelBackup);
-    $scope.passwdConfirm = '';
     $scope.changed = false;
   };
 
@@ -62,10 +75,7 @@ loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $log, Lo
 
     if ((unameSet && !paswdSet)||(!unameSet && paswdSet)) {
 
-      Notifications.error('Fill in both username and password.');
-    } else if (paswdSet && !angular.equals($scope.storageModel.credentials[0].password, $scope.passwdConfirm)) {
-
-      Notifications.error('Password does not match the password confirmation.');
+      Notifications.error('Please fill in both the username and password fields.');
     } else {
 
       var credentials = [];
@@ -100,14 +110,14 @@ loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $log, Lo
         LoStorage.create({appId: $scope.curApp.id}, data,
           // success
           function(/*value, responseHeaders*/) {
-            Notifications.success('New storage successfully created.');
+            Notifications.success('The storage "' + data.id + '" has been created.');
             storageModelBackup = angular.copy($scope.storageModel);
             $scope.changed = false;
             $location.search('created', $scope.storageModel.id).path('applications/' + currentApp.id + '/storage');
           },
           // error
           function(httpResponse) {
-            Notifications.httpError('Failed to create new storage', httpResponse);
+            Notifications.httpError('Failed to create the storage "' + data.id + '".', httpResponse);
           });
       }
       // Update the storage resource
@@ -125,12 +135,12 @@ loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $log, Lo
         LoStorage.update({appId: $scope.curApp.id, storageId: storageModelBackup.id}, $scope.storageModel,
         function(){
           // Update success
-          Notifications.success('Storage successfully udpated.');
+          Notifications.success('The storage "' + storageModelBackup.id + '" has been updated.');
           $location.path('applications/' + currentApp.id + '/storage');
         },
         function(httpResponse){
           // Update failure
-          Notifications.httpError('Failed to update the storage', httpResponse);
+          Notifications.httpError('Failed to update the storage "' + storageModelBackup.id + '".', httpResponse);
         });
       }
     }
@@ -139,7 +149,7 @@ loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $log, Lo
 });
 
 loMod.controller('StorageListCtrl', function($scope, $rootScope, $log, $routeParams, loStorageList, currentApp,
-                                             LoStorage, Notifications, $modal) {
+                                             LoStorage, Notifications, $modal, $filter) {
 
   $log.debug('StorageListCtrl');
 
@@ -159,14 +169,14 @@ loMod.controller('StorageListCtrl', function($scope, $rootScope, $log, $routePar
 
   $scope.resources = [];
 
-  if (loStorageList._members) {
-    for (var i = 0; i < loStorageList._members.length; i++) {
+  if (loStorageList.members) {
+    for (var i = 0; i < loStorageList.members.length; i++) {
 
-      var resource = loStorageList._members[i];
+      var resource = loStorageList.members[i];
 
       if (resource.hasOwnProperty('db')) {
         $scope.resources.push({
-          provider: 'Mongo DB',
+          provider: 'mongoDB',
           path: resource.id,
           host: resource.servers[0].host,
           port: resource.servers[0].port,
@@ -189,7 +199,6 @@ loMod.controller('StorageListCtrl', function($scope, $rootScope, $log, $routePar
   };
 
   $scope.modalStorageDelete = function(id){
-    console.log('opening model '+id);
     $scope.storageId = id;
 
     $modal.open({
@@ -202,17 +211,21 @@ loMod.controller('StorageListCtrl', function($scope, $rootScope, $log, $routePar
   $scope.storageDelete = function(){
     LoStorage.delete({ appId : currentApp.id, storageId : $scope.storageId},
       function(){
-        Notifications.success('Storage successfully deleted.');
+        Notifications.success('The storage "' + $scope.storageId + '" has been deleted.');
+        var _deletedStorage = $filter('filter')($scope.resources, {'path':$scope.storageId})[0];
+        var _deletedIndex = $scope.resources.indexOf(_deletedStorage);
+
+        $scope.resources.splice(_deletedIndex, 1);
       },
       function(httpResponse){
-        Notifications.httpError('Failed to delete the storage.', httpResponse);
+        Notifications.httpError('Failed to delete the storage "' + $scope.storageId + '".', httpResponse);
       });
   };
 });
 
 loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $route, currentApp, $modal, Notifications,
                                                    currentCollectionList, LoCollection, $routeParams, LoCollectionItem,
-                                                   LiveOak, $location) {
+                                                   LiveOak, $location, $window, $cookieStore, $q, loRemoteCheck, loJSON) {
 
   $log.debug('StorageCollectionCtrl');
   $rootScope.curApp = currentApp;
@@ -228,16 +241,22 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     {'label': 'Applications',   'href':'#/applications'},
     {'label': currentApp.name,  'href':'#/applications/' + currentApp.id},
     {'label': 'Storage',        'href':'#/applications/' + currentApp.id + '/storage'},
-    {'label': $scope.storageId, 'href':'#/applications/' + currentApp.id + '/storage/' + $routeParams.storageId},
-    {'label': 'Collections',    'href':''}
+    {'label': $scope.storageId, 'href':'#/applications/' + currentApp.id + '/storage/' + $routeParams.storageId}
+
   ];
 
-  $scope.collectionList = currentCollectionList._members;
-  $scope.collectionData = {};
-  $scope.collectionDataBackup = {};
-  $scope.live = {};
+  if ($scope.collectionId){
+    $scope.breadcrumbs.push({'label': $scope.collectionId,    'href':''});
+  } else {
+    $scope.breadcrumbs.push({'label': 'Collections',    'href':''});
+  }
 
-  $scope.subscriptionId = false;
+  $scope.collectionList = currentCollectionList.members;
+
+  $scope.collectionData = [];
+  $scope.collectionDataBackup = [];
+
+  $scope.live = {};
 
   $scope.columnsHidden = [];
   $scope.newRow = {};
@@ -250,7 +269,7 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
   $scope.isDataChange = false;
 
   $scope.searchColumns = [];
-  $scope.searchConditions = [{type:'EQUALS', text:''}];
+  $scope.searchConditions = [{type:'E', text:''}];
   $scope.showAdvanced = false;
 
   $scope.searchQuery = '';
@@ -265,28 +284,36 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
   }
 
   // Load data for selected collection
-  if ( currentCollectionList ) {
+  if ( currentCollectionList && $scope.collectionId) {
 
     loadCollectionData($scope.collectionId, true);
 
-    LiveOak.connect(function () {
+    var connectCallback = function() {
       if ($scope.subscriptionId){
-        $log.debug('Removing subscription \"' + $scope.subscriptionId + '\"');
+        $log.debug('Removing subscription "' + $scope.subscriptionId + '"');
         LiveOak.unsubscribe($scope.subscriptionId);
-        $scope.subscriptionId = false;
+        $rootScope.subscriptionId = false;
       }
 
       if (!$scope.subscriptionId) {
         var urlSubscribe = '/' + currentApp.id + '/' + $routeParams.storageId + '/' + $scope.collectionId + '/*';
-        $scope.subscriptionId = LiveOak.subscribe(urlSubscribe, function (data) {
+        $rootScope.subscriptionId = LiveOak.subscribe(urlSubscribe, function (data) {
+          $log.debug('Data reload callback');
           //Notifications.warn('Data were changed outside console: ' + JSON.stringify(data));
-          $log.debug('UPS read: ' + JSON.stringify(data));
           loadCollectionData($scope.collectionId, true);
           $scope.live = data;
         });
 
         $log.debug('Subscribe id is: ' + $scope.subscriptionId);
       }
+    };
+
+    LiveOak.auth.updateToken(5).success(function() {
+      $log.debug('Valid token found. Issuing authenticated connect');
+      LiveOak.connect('Bearer', LiveOak.auth.token, connectCallback);
+    }).error(function() {
+      $log.debug('Can\'t retrieve valid token. Issuing unauthenticated connect');
+      LiveOak.connect(connectCallback);
     });
   }
 
@@ -369,29 +396,40 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
   };
 
   $scope.changeCollection = function() {
-    console.log('Selected: ' + $scope.collectionId);
     $location.path('/applications/'+currentApp.id+'/storage/'+$routeParams.storageId+'/browse/'+$scope.collectionId);
   };
 
-  $scope.$watch('collectionData._members', function(){
+  $scope.$watch('collectionData', function(){
       $log.debug('Collection data changed.');
-      if(!angular.equals($scope.collectionData._members, $scope.collectionDataBackup._members)){
+      if(!angular.equals($scope.collectionData, $scope.collectionDataBackup)){
         $log.debug('Collection data differs from original.');
         $scope.isDataChange = true;
+      } else {
+        $scope.isDataChange = false;
+      }
+      if ($scope.collectionForm.$valid) {
+        updateExportUrl();
       }
     }, true
   );
 
   $scope.$watch('columns', function(){
       $log.debug('Columns number changed.');
-      if(!angular.equals($scope.collectionData._members, $scope.collectionDataBackup._members)){
+      if(!angular.equals($scope.collectionData, $scope.collectionDataBackup)){
         $log.debug('Column number differs from original.');
         $scope.isColumnChange = true;
       }
     }, true
   );
 
-  var ModalInstanceCtrl = function ($scope, $modalInstance) {
+  $scope.isInfoClosed = $cookieStore.get($scope.username + '_isInfoClosed');
+
+  $scope.infoClose = function() {
+    $cookieStore.put($scope.username + '_isInfoClosed', true);
+    $scope.isInfoClosed = true;
+  };
+
+  var ModalInstanceCtrl = function ($scope, $modalInstance, FileReader, Notifications) {
 
     $scope.close = function () {
       $modalInstance.close();
@@ -401,6 +439,55 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
       $modalInstance.dismiss('cancel');
     };
 
+    $scope.setFormScope= function(scope){
+      $scope.modalScope = scope;
+      $scope.modalScope.progress = 0;
+
+      $scope.modalScope.$on('fileProgress', function(e, progress) {
+        $scope.modalScope.progress = progress.loaded / progress.total;
+      });
+    };
+
+    $scope.checkColName = function (collectionName) {
+      var _resMethod = LoCollection.check;
+      var _resParams = {appId: currentApp.id, storageId: $routeParams.storageId, collectionId: collectionName};
+
+      var _formCtrl = $scope.modalScope.loCollectionCreate;
+      var _inputCtrl = _formCtrl.collectionName;
+      var _valString = 'collectionNameExists';
+
+      _formCtrl.$setValidity(_valString, false);
+      var _callbacks = {
+        success: function(){
+          _inputCtrl.$setValidity(_valString, false);
+        },
+        error: function(){
+          _inputCtrl.$setValidity(_valString, true);
+          _formCtrl.$setValidity(_valString, true);
+        }
+      };
+
+      this.timeout = loRemoteCheck(this.timeout, _resMethod, _resParams, _callbacks);
+    };
+
+    $scope.getFile = function () {
+
+      $scope.modalScope.$apply(function(){
+        $scope.modalScope.progress = 0;
+        $scope.modalScope.inProgress = true;
+      });
+      FileReader.readAsDataUrl($scope.modalScope.file, $scope.modalScope)
+        .then(function(data) {
+          try {
+            $scope.jsonData = JSON.parse(data);
+            $scope.modalScope.progress = 1;
+          } catch (e){
+            Notifications.error('An error occured during the JSON parsing: ' + e);
+            $scope.modalScope.progress = 0;
+            $scope.modalScope.isError = true;
+          }
+        });
+    };
   };
 
   $scope.modalColumnAdd = function(){
@@ -414,6 +501,14 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
   $scope.modalCollectionAdd = function(){
     $modal.open({
       templateUrl: '/admin/console/templates/modal/storage/collection-add.html',
+      controller: ModalInstanceCtrl,
+      scope: $scope
+    });
+  };
+
+  $scope.modalCollectionImport = function(){
+    $modal.open({
+      templateUrl: '/admin/console/templates/modal/storage/collection-import.html',
       controller: ModalInstanceCtrl,
       scope: $scope
     });
@@ -440,7 +535,10 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
       {id : collectionName}).$promise;
 
     newCollectionPromise.then(function(){
+      Notifications.success('The collection "' + collectionName + '" has been created.');
       goToCollection(collectionName);
+    }, function() {
+      Notifications.error('Not able to create the collection "' + collectionName + '".');
     });
   };
 
@@ -450,9 +548,37 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
       collectionId: $scope.collectionId}).$promise;
 
     deletePromise.then(function(){
+      Notifications.success('The collection "' + $scope.collectionId + '" has been deleted.');
       loadCollectionList(selectFirst);
+    }, function() {
+      Notifications.error('Failed to delete the collection "' + $scope.collectionId + '".');
     });
   };
+
+  function updateExportUrl(){
+    try {
+      $log.debug('Updating export url');
+      var dataObj = angular.copy($scope.collectionData);
+      var dataExportObj = [];
+      for (var row in dataObj) {
+        if (dataObj[row].hasOwnProperty('id')) {
+          delete dataObj[row].id;
+        }
+        if (dataObj[row].hasOwnProperty('self')) {
+          delete dataObj[row].self;
+        }
+        dataExportObj.push(angular.toJson(loJSON.parseJSON(dataObj[row])));
+      }
+
+      var blob = new Blob(['[' + dataExportObj.toString() + ']'], { type: 'text/plain' });
+      var urlCreator = $window.URL || $window.webkitURL || $window.mozURL || $window.msURL;
+
+      $scope.urlExport = urlCreator.createObjectURL(blob);
+      $scope.jsonName = $scope.collectionId + '_' + (new Date()).toISOString() + '.json';
+    } catch(e) {
+      // Do nothing if the collection form is invalid
+    }
+  }
 
   $scope.rowAdd = function(){
     $log.debug('Creating new row ' + $scope.newRow);
@@ -468,8 +594,8 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
 
     var rowToRemove = -1;
 
-    for (var k in $scope.collectionData._members){
-      var item = $scope.collectionData._members[k];
+    for (var k in $scope.collectionData){
+      var item = $scope.collectionData[k];
       if (item.id === id) {
         rowToRemove = k;
         break;
@@ -479,7 +605,7 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     if (rowToRemove > -1){
       $scope.rowsToDelete.push(id);
     } else {
-      $log.error('Unable to find item to remove. The ID \"'+rowToRemove+'\" does not exist.');
+      $log.error('Unable to find item to remove. The ID "'+rowToRemove+'" does not exist.');
     }
 
     $scope.isDataChange = true;
@@ -500,12 +626,13 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     if ($scope.columnNew !== '') {
       $scope.columns.push(columnName);
     }
-
-    for (var k in $scope.collectionData._members){
-      var item = $scope.collectionData._members[k];
+/*
+    // Commenting because the empty string is not the same as no value.
+    for (var k in $scope.collectionData){
+      var item = $scope.collectionData[k];
       item[columnName] = '';
     }
-
+*/
     $scope.isDataChange = true;
     $scope.isColumnChange = true;
   };
@@ -517,8 +644,8 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     if (index > -1) {
       $scope.columns.splice(index, 1);
 
-      for (var k in $scope.collectionData._members) {
-        var item = $scope.collectionData._members[k];
+      for (var k in $scope.collectionData) {
+        var item = $scope.collectionData[k];
         if (item.hasOwnProperty(columnName)) {
           item[columnName] = null;
         }
@@ -532,8 +659,8 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
   $scope.columnClear = function(col){
     $log.debug('Clearing column ' + col );
 
-    for (var i in $scope.collectionData._members){
-      var row = $scope.collectionData._members[i];
+    for (var i in $scope.collectionData){
+      var row = $scope.collectionData[i];
       row[col] = '';
     }
   };
@@ -542,11 +669,20 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     $scope.columnsHidden.push(col);
   };
 
+  $scope.columnAvailable = function(input){
+
+    if ($scope.columns.indexOf(input) > -1){
+      return false;
+    }
+
+    return true;
+  };
+
   $scope.collectionClear = function(){
     $log.debug('Clearing collection ' + $scope.collectionId );
 
     $scope.columns = ['id'];
-    $scope.collectionData._members = [];
+    $scope.collectionData = [];
     $scope.columnsHidden = [];
     $scope.isClearAll = true;
   };
@@ -557,12 +693,26 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     $scope.filterConditions = [];
 
     $scope.searchColumns = [];
-    $scope.searchConditions = [{type:'EQUALS', text:''}];
+    $scope.searchConditions = [{type:'E', text:''}];
   };
 
   $scope.searchConditionAdd = function(){
     $scope.searchConditions.push({type:'E', text:''});
   };
+
+  $scope.searchConditionsEmpty = true;
+
+  $scope.$watch('searchConditions', function(){
+    for (var index in $scope.searchConditions){
+      var condition = $scope.searchConditions[index];
+
+      if (!condition.text || condition.text === ''){
+        $scope.searchConditionsEmpty = true;
+        return;
+      }
+    }
+    $scope.searchConditionsEmpty = false;
+  }, true);
 
   $scope.searchConditionRemove = function(index){
     $log.debug('Going to remove '+index);
@@ -583,24 +733,48 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     $scope.showAdvanced = false;
   };
 
+  $scope.collectionImport = function(removeAll, data) {
+
+    if (removeAll) {
+      $scope.collectionClear();
+    }
+
+    for(var i in data){
+      var row = data[i];
+
+      for (var j in row){
+        if (row.hasOwnProperty(j) && ($scope.columns.indexOf(j) === -1)) {
+          $scope.columnAdd(j);
+        }
+      }
+
+      $scope.newRows.push(loJSON.toStringObject(row));
+    }
+
+  };
+
   $scope.save = function(){
     $log.debug('Saving collection.');
 
+    var promises = [];
+
     // If Clear All was clicked, no need to delete specific rows, everything will be deleted.
     if ($scope.isClearAll) {
-      for (var j in $scope.collectionDataBackup._members){
-        var itemToClear = $scope.collectionDataBackup._members[j];
+      for (var j in $scope.collectionDataBackup){
+        var itemToClear = $scope.collectionDataBackup[j];
 
-        LoCollectionItem.delete({appId: currentApp.id, storageId: $routeParams.storageId,
-          collectionId: $scope.collectionId, itemId: itemToClear.id});
+        var deleteAllPromise = LoCollectionItem.delete({appId: currentApp.id, storageId: $routeParams.storageId,
+          collectionId: $scope.collectionId, itemId: itemToClear.id.substring(1,itemToClear.id.length-1)}).$promise;
+
+        promises.push(deleteAllPromise);
       }
     } else {
 
       var removeFromList = function(id){
-        for (var k in $scope.collectionData._members){
-          var item = $scope.collectionData._members[k];
+        for (var k in $scope.collectionData){
+          var item = $scope.collectionData[k];
           if (item.id === id){
-            $scope.collectionDataBackup._members.splice(k,1);
+            $scope.collectionDataBackup.splice(k,1);
             return;
           }
         }
@@ -610,9 +784,10 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
       for (var i in $scope.rowsToDelete) {
         var itemToDelete = $scope.rowsToDelete[i];
         if (itemToDelete) {
-          $log.debug('Going to delete: ' + JSON.stringify(itemToDelete));
           var deletePromise = LoCollectionItem.delete({appId: currentApp.id, storageId: $routeParams.storageId,
-            collectionId: $scope.collectionId, itemId: itemToDelete}).$promise;
+            collectionId: $scope.collectionId, itemId: itemToDelete.substring(1,itemToDelete.length-1)}).$promise;
+
+          promises.push(deletePromise);
 
           deletePromise.then(removeFromList(itemToDelete));
         }
@@ -630,29 +805,30 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     };
 
     // Then update all changed data in the table
-    for (var k in $scope.collectionData._members){
-      var item = $scope.collectionData._members[k];
+    for (var k in $scope.collectionData){
+      var item = $scope.collectionData[k];
 
       var itemToSave = angular.copy(item);
       delete itemToSave.self;
 
       // Update existing items
-      var itemFromBackup = findById(itemToSave.id, $scope.collectionDataBackup._members);
+      var itemFromBackup = findById(itemToSave.id, $scope.collectionDataBackup);
       if (itemFromBackup && itemFromBackup.self) {
         delete itemFromBackup.self;
       }
 
-      // If the JSON value could be represented as a number, auto-type the string to the number type
-      itemToSave = autoType(itemToSave);
-
       if (itemToSave.id) {
-        $log.debug('Checking for update: ' + JSON.stringify(itemToSave));
+
+        $log.debug('Checking for update: ' + angular.toJson(itemToSave));
         if (itemFromBackup && !angular.equals(itemToSave, itemFromBackup)) {
-          $log.debug('Updating: ' + JSON.stringify(itemToSave));
-          LoCollectionItem.update({appId: currentApp.id, storageId: $routeParams.storageId,
-            collectionId: $scope.collectionId, itemId: itemToSave.id}, itemToSave);
+
+          var decodedItemToSave = loJSON.parseJSON(itemToSave);
+          var updatePromise = LoCollectionItem.update({appId: currentApp.id, storageId: $routeParams.storageId,
+            collectionId: $scope.collectionId, itemId: decodedItemToSave.id}, decodedItemToSave).$promise;
+
+          promises.push(updatePromise);
         } else {
-          $log.debug('Not updating:        ' + JSON.stringify(itemToSave));
+          $log.debug('Not updating:        ' + angular.toJson(itemToSave));
         }
       }
       // Create new items
@@ -661,15 +837,28 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
       }
     }
 
-    for (var l in $scope.newRows){
-      var newRowToSave = autoType($scope.newRows[l]);
-
-      $log.debug('Creating: ' + JSON.stringify(newRowToSave));
-      LoCollectionItem.create({appId: currentApp.id, storageId: $routeParams.storageId,
-        collectionId: $scope.collectionId}, newRowToSave);
+    function errorCreate(result){
+      var errorType = result.data.message || result.data['error-type'];
+      var object = result.config.data;
+      Notifications.error('Error: "' + errorType + '" during saving "' + JSON.stringify(object) + '" to the collection \"' + $scope.collectionId + '\".');
     }
 
-    Notifications.success('The changes in \"' + $scope.collectionId + '\" have been saved.');
+    for (var l in $scope.newRows){
+      var newRowToSave = $scope.newRows[l];
+      $log.debug('Creating: ' + newRowToSave);
+      var decodedNewRowToSave = loJSON.parseJSON(newRowToSave);
+
+      var promiseCreate = LoCollectionItem.create({appId: currentApp.id, storageId: $routeParams.storageId,
+        collectionId: $scope.collectionId}, decodedNewRowToSave, angular.noop, errorCreate).$promise;
+
+      promises.push(promiseCreate);
+    }
+
+    $q.all(promises).then(function() {
+      Notifications.success('The changes in the collection "' + $scope.collectionId + '" have been saved.');
+    }, function() {
+      Notifications.warn('There were some errors during update of the collection "' + $scope.collectionId + '".');
+    });
 
     resetEnv();
     loadCollectionData($scope.collectionId, true);
@@ -682,7 +871,6 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
 
     $scope.columns = angular.copy($scope.columnsBackup);
     $scope.collectionData = angular.copy($scope.collectionDataBackup);
-    //loadCollectionData($scope.collectionId, true);
   };
 
   function loadCollectionData(colId, loadColumns) {
@@ -696,9 +884,9 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
 
         $scope.columns = ['id'];
 
-        for (var rowIndex in data._members) {
-          if (data._members && data._members[rowIndex]) {
-            for (var c in data._members[rowIndex]) {
+        for (var rowIndex in data.members) {
+          if (data.members && data.members[rowIndex]) {
+            for (var c in data.members[rowIndex]) {
               if (c !== 'self' && c !== 'id' && $scope.columns.indexOf(c) === -1) {
                 $scope.columns.push(c);
               }
@@ -706,9 +894,16 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
           }
         }
       }
+
+      $scope.collectionData = [];
+
+      for (var rIndex in data.members){
+        var rData = data.members[rIndex];
+        $scope.collectionData.push(loJSON.toStringObject(rData));
+      }
+
+      $scope.collectionDataBackup = angular.copy($scope.collectionData);
       $scope.columnsBackup = angular.copy($scope.columns);
-      $scope.collectionData = data;
-      $scope.collectionDataBackup = angular.copy(data);
       $scope.isDataChange = false;
     });
   }
@@ -731,25 +926,13 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     }
   }
 
-  function autoType(obj){
-    // If the JSON value could be represented as a number, auto-type the string to the number type
-    for( var fieldId in obj){
-      if (fieldId !== 'id' && obj.hasOwnProperty(fieldId)){
-        var fieldVal = obj[fieldId];
-        if (!isNaN(fieldVal)){
-          obj[fieldId] = parseFloat(fieldVal);
-        }
-      }
-    }
-
-    return obj;
-  }
+  $scope.isValidJSON = loJSON.isValidJSON;
 
   function loadCollectionList(callback) {
     $log.debug('Loading collection list');
     var promise = LoCollection.getList({appId: currentApp.id, storageId: $routeParams.storageId});
     promise.$promise.then(function (data) {
-      $scope.collectionList = data._members;
+      $scope.collectionList = data.members;
       if (callback) {
         callback();
       }
@@ -766,6 +949,6 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     $scope.filterColumns = [];
     $scope.filterConditions = [];
     $scope.searchColumns = [];
-    $scope.searchConditions = [{type:'EQUALS', text:''}];
+    $scope.searchConditions = [{type:'E', text:''}];
   }
 });

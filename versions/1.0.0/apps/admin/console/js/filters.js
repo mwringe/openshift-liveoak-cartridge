@@ -84,7 +84,7 @@ loFilters.filter('conditional', function () {
 
     // Generate includes & excludes sets from conditions
     angular.forEach(conditions, function(condition){
-      if (condition.type === 'EQUALS' && condition.value !== '') {
+      if (condition.type === 'E' && condition.value !== '') {
         includes.push(condition.text);
       } else if (condition.value !== ''){
         excludes.push(condition.text);
@@ -120,4 +120,10 @@ loFilters.filter('conditional', function () {
 
     return output;
   };
+});
+
+loFilters.filter('clientname', function() {
+  return function (clientName, appName) {
+    return clientName ? clientName.replace(new RegExp('^liveoak.client.' + appName + '.'), '') : clientName;
+  }
 });
