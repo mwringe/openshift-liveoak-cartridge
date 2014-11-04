@@ -55,7 +55,7 @@ Provides:
 #Requires:
 #  - java-1.8.0
 Requires:
-  - mongo
+  - mongodb-2.4
 Publishes:
   publish-http-url:
     Type: "NET_TCP:httpd-proxy-info"
