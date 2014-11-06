@@ -1,6 +1,3 @@
-## WARNING:
-###The first thing you will have to do after creating your gear is to login to the admin console to set the admin password (available under /admin). The first person to access this page gets to modify this value!
-
 # OpenShift LiveOak Cartridge
 
 This cartridge is running a snapshot of LiveOak 1.0.0.Beta02. The LiveOak website can be located at www.liveoak.io

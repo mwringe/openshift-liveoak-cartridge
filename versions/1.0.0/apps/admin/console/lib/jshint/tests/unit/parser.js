@@ -2595,6 +2595,26 @@ exports["test: esnext generator without yield and check turned off"] = function 
   test.done();
 };
 
+exports["test: esnext generator with yield delegation, gh-1544"] = function(test) {
+  var code = [
+    "function* G() {",
+    "  yield* (function*(){})();",
+    "}"
+  ];
+
+  TestRun(test)
+    .addError(1, "'function*' is only available in ES6 (use esnext option).")
+    .addError(2, "'yield' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
+    .addError(2, "'function*' is only available in ES6 (use esnext option).")
+    .addError(2, "A generator function shall contain a yield statement.")
+    .test(code);
+
+
+  TestRun(test).test(code, {esnext: true, noyield: true});
+
+  test.done();
+};
+
 exports["test: mozilla generator"] = function (test) {
   // example taken from https://developer.mozilla.org/en-US/docs/JavaScript/New_in_JavaScript/1.7
   var code = [
@@ -4116,6 +4136,29 @@ exports["class and method naming"] = function (test) {
     "  get constructor() {}",
     "  set constructor(x) {}",
     "  prototype() {}",
+    "  an extra identifier 'in' methodName() {}",
+    "  get foo extraIdent1() {}",
+    "  set foo extraIdent2() {}",
+    "  static some extraIdent3() {}",
+    "  static get an extraIdent4() {}",
+    "  static set an extraIdent5() {}",
+    "  get dupgetter() {}",
+    "  get dupgetter() {}",
+    "  set dupsetter() {}",
+    "  set dupsetter() {}",
+    "  static get dupgetter() {}",
+    "  static get dupgetter() {}",
+    "  static set dupsetter() {}",
+    "  static set dupsetter() {}",
+    "  dupmethod() {}",
+    "  dupmethod() {}",
+    "  static dupmethod() {}",
+    "  static dupmethod() {}",
+    "  ['computed method']() {}",
+    "  static ['computed static']() {}",
+    "  get ['computed getter']() {}",
+    "  set ['computed setter']() {}",
+    "  (typo() {}",
     "}"
   ];
   var run = TestRun(test)
@@ -4123,7 +4166,20 @@ exports["class and method naming"] = function (test) {
     .addError(2, "Expected an identifier and instead saw 'arguments' (a reserved word).")
     .addError(4, "A class getter method cannot be named 'constructor'.")
     .addError(5, "A class setter method cannot be named 'constructor'.")
-    .addError(7, "A class method cannot be named 'prototype'.");
+    .addError(6, "A class method cannot be named 'prototype'.")
+    .addError(7, "Class properties must be methods. Expected '(' but instead saw 'extra'.")
+    .addError(8, "Class properties must be methods. Expected '(' but instead saw 'extraIdent1'.")
+    .addError(9, "Class properties must be methods. Expected '(' but instead saw 'extraIdent2'.")
+    .addError(10, "Class properties must be methods. Expected '(' but instead saw 'extraIdent3'.")
+    .addError(11, "Class properties must be methods. Expected '(' but instead saw 'extraIdent4'.")
+    .addError(12, "Class properties must be methods. Expected '(' but instead saw 'extraIdent5'.")
+    .addError(14, "Duplicate getter method 'dupgetter'.")
+    .addError(16, "Duplicate setter method 'dupsetter'.")
+    .addError(18, "Duplicate static getter method 'dupgetter'.")
+    .addError(20, "Duplicate static setter method 'dupsetter'.")
+    .addError(22, "Duplicate class method 'dupmethod'.")
+    .addError(24, "Duplicate static class method 'dupmethod'.")
+    .addError(29, "Unexpected '('.");
 
   run.test(code, {esnext: true});
 
@@ -4841,6 +4897,13 @@ exports.testStrictDirectiveASI = function (test) {
     .addError(1, "Expected an identifier and instead saw ','.")
     .addError(1, "Expected an assignment or function call and instead saw an expression.")
     .test("'use strict',function fn() {}\nfn();", options);
+
+  TestRun(test, 7)
+    .test("'use strict'.split(' ');", options);
+
+  TestRun(test, 8)
+    .addError(1, "Missing \"use strict\" statement.")
+    .test("(function() { var x; \"use strict\"; return x; }());", { strict: true, expr: true });
 
   test.done();
 };
