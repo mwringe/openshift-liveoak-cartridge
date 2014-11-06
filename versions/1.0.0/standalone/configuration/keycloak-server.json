@@ -62,12 +62,12 @@
 
     "connectionsMongo": {
         "default": {
-            "host": "${OPENSHIFT_MONGODB_DB_HOST}",
-            "port": "${OPENSHIFT_MONGODB_DB_PORT}",
-            "db": "${OPENSHIFT_GEAR_NAME}",
+            "host": "${liveoak.mongo.host}",
+            "port": "${liveoak.mongo.port}",
+            "db": "${liveoak.mongo.authDb}",
             "clearOnStartup": "${keycloak.connectionsMongo.clearOnStartup:false}",
-            "user": "${OPENSHIFT_MONGODB_DB_USERNAME}",
-            "password": "${OPENSHIFT_MONGODB_DB_PASSWORD}",
+            "user": "${liveoak.mongo.username}",
+            "password": "${liveoak.mongo.password}",
         }
     }
 }
