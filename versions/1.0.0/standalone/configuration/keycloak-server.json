@@ -67,7 +67,7 @@
             "db": "${liveoak.mongo.authDb}",
             "clearOnStartup": "${keycloak.connectionsMongo.clearOnStartup:false}",
             "user": "${liveoak.mongo.username}",
-            "password": "${liveoak.mongo.password}",
+            "password": "${liveoak.mongo.password}"
         }
     }
 }
