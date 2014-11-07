@@ -16,6 +16,7 @@ Categories:
 Website: http://www.liveoak.io
 Help-Topics:
   "Developer Center": https://www.openshift.com/developers
+  "Initial Password": $OPENSHIFT_LIVEOAK_INITIAL_PASSWORD
 Cart-Data:
   - Key: OPENSHIFT_LIVEOAK_LOG_DIR
     Type: environment
@@ -37,7 +38,6 @@ Cart-Data:
   - Key: username
     Type: cart_data
     Description: The admin's username
-    Description: "Internal IP to which the web-framework binds to."
   - Key: OPENSHIFT_APP_DNS
     Type: environment
     Description: "Fully qualified domain name for the application."
