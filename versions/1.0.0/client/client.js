@@ -111,7 +111,7 @@ var LiveOak = function( options ) {
                     server.host = parts[2].substring(0, parts[2].indexOf(':'));
                     server.port = parseInt(parts[2].substring(parts[2].indexOf(':') + 1));
                 }
-                if (parts[0] == 'https') {
+                if (parts[0] == 'https:') {
                     server.secure = true;
                 }
                 server.appId = parts[3];

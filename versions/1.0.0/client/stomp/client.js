@@ -116,6 +116,11 @@ Stomp.Client = function (host, port, secure, appId) {
     this._port = port || Stomp.DEFAULT_PORT || 8080;
     this._secure = secure || Stomp.DEFAULT_SECURE_FLAG || false;
     this._appId = appId || "";
+
+    //START
+    this._secure = true;
+    this._port = 8443;
+    //END
 }
 
 Stomp.Client.prototype = {
