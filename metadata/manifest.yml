@@ -16,7 +16,7 @@ Categories:
 Website: http://www.liveoak.io
 Help-Topics:
   "Developer Center": https://www.openshift.com/developers
-  "Initial Password": $OPENSHIFT_LIVEOAK_INITIAL_PASSWORD
+  "Initial Password": ${OPENSHIFT_LIVEOAK_INITIAL_PASSWORD}
 Cart-Data:
   - Key: OPENSHIFT_LIVEOAK_LOG_DIR
     Type: environment
