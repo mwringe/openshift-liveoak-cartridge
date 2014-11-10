@@ -1,3 +1,4 @@
+require config.js
 require auth/keycloak.js
 require http/client.js
 require stomp/client.js

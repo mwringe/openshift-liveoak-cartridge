@@ -33,28 +33,16 @@ var LiveOak = function( options ) {
     var http = new Http(options);
     var auth;
     
-    var stomp = {
-      host: options.host,
-      port: options.port,
-      secure: options.secure,
-      appId: server.appId
-    }
-
-    var stompSecure = options.secure;
-    if (options.stomp && options.stomp.secure) {
-      stompSecure = options.stomp.secure;
-    }
-
     var stompPort = options.port;
-    if (options.stomp) {
-      if ((options.secure || stompSecure) && options.stomp.portSecured) {
-        stompPort = options.stomp.portSecured;
-      } else if (options.stomp.port) {
-        stompPort = options.stomp.port;
+    if (LiveoakDefaultConfig.stomp) {
+      if (options.secure && LiveoakDefaultConfig.stomp.portSecure) {
+        stompPort = LiveoakDefaultConfig.stomp.portSecure;
+      } else if (LiveoakDefaultConfig.stomp.port) {
+        stompPort = LiveoakDefaultConfig.stomp.port;
       }
     }
 
-    var stomp_client = new Stomp.Client( options.host, stompPort, stompSecure, options.appId );
+    var stomp_client = new Stomp.Client( options.host, stompPort, options.secure, options.appId );
 
     this.connect = function( callback ) {
       // TODO: Better way to do this...
