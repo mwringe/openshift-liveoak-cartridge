@@ -36,8 +36,8 @@ var LiveOak = function( options ) {
     var stomp = {
       host: options.host,
       port: options.port,
-      secure = options.secure,
-      appId = server.appId;
+      secure: options.secure,
+      appId: server.appId;
     }
 
     var stompSecure = options.secure;

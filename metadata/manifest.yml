@@ -15,7 +15,6 @@ Categories:
   - liveoak
 Website: http://www.liveoak.io
 Help-Topics:
-  "Developer Center": https://www.openshift.com/developers
 Cart-Data:
   - Key: OPENSHIFT_LIVEOAK_LOG_DIR
     Type: environment
