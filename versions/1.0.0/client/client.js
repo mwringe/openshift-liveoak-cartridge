@@ -54,7 +54,7 @@ var LiveOak = function( options ) {
       }
     }
 
-    var stomp_client = new Stomp.Client( options.host, stompPort, stompsecure, options.appId );
+    var stomp_client = new Stomp.Client( options.host, stompPort, stompSecure, options.appId );
 
     this.connect = function( callback ) {
       // TODO: Better way to do this...
