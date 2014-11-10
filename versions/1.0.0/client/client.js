@@ -16,19 +16,20 @@ var LiveOak = function( options ) {
         return new LiveOak( options );
     }
 
-    // Use address of liveoak.js if server address not specified
+    // grab values from the script URL and use those if not specified in the options directly
+    var server = parseScriptUrl();
     if (!options.host) {
-        var server = parseScriptUrl();
-        options.host = server.host;
-        options.port = server.port;
-        options.secure = server.secure;
-        options.appId = server.appId;
+      options.host = server.host;
     }
-
-    // Pull application id from url, if needed
+    if (!options.port) {
+      options.port = server.port;
+    }
+    if (!options.secure) {
+      options.secure = server.secure;
+    }
     if (!options.appId) {
-        options.appId = parseApplicationId();
-    }
+      options.appId = server.appId;
+    }    
 
     var http = new Http(options);
     var auth;

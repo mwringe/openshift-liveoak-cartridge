@@ -1,6 +1,6 @@
-require config.js
 require auth/keycloak.js
 require http/client.js
 require stomp/client.js
 require stomp/transport/websocket.js
+require config.js
 require client.js
