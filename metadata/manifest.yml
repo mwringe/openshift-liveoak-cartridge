@@ -1,6 +1,6 @@
 Name: liveoak
 Cartridge-Short-Name: LIVEOAK
-Display-Name: LiveOak BaaS 1.0.0.Alpha01
+Display-Name: LiveOak BaaS 1.0.0.Beta02-SNAPSHOT
 Description: "The opensource RESTful backend-as-a-service stack"
 Version: '1.0.0'
 License: EPL
