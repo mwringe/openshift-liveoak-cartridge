@@ -33,12 +33,20 @@ var LiveOak = function( options ) {
 
     var http = new Http(options);
     var auth;
-    
+
     var stompPort = options.port;
-    if (options.secure && typeof LIVEOAK_STOMP_PORT_SECURE != 'undefined') {
-      stompPort = LIVEOAK_STOMP_PORT_SECURE;
-    } else if (typeof LIVEOAK_STOMP_PORT != 'undefined') {
-      stompPort = LIVEOAK_STOMP_PORT;
+    if (options.stomp && (options.stomp.port || options.stomp.portSecure)) {
+      if (options.secure && options.stomp.portSecure) {
+        stompPort = options.stomp.portSecure;
+      } else if (options.stomp.port) {
+        stompPort = options.stomp.port;
+      }
+    } else {  
+      if (options.secure && typeof LIVEOAK_STOMP_PORT_SECURE != 'undefined') {
+        stompPort = LIVEOAK_STOMP_PORT_SECURE;
+      } else if (typeof LIVEOAK_STOMP_PORT != 'undefined') {
+        stompPort = LIVEOAK_STOMP_PORT;
+      }
     }
 
     var stomp_client = new Stomp.Client( options.host, stompPort, options.secure, options.appId );

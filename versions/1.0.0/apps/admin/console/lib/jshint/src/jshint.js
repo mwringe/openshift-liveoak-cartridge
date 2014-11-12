@@ -98,8 +98,6 @@ var JSHINT = (function () {
         nonew       : true, // if using `new` for side-effects should be disallowed
         // disallowed
         undef       : true, // if variables should be declared before used
-        singleGroups: false,// if grouping operators for single-expression statements
-        // should be disallowed
         enforceall : false // option to turn on all enforce options
         // by default and all relax options off by default
       },
@@ -626,9 +624,6 @@ var JSHINT = (function () {
     // if the identifier is from a let, adds it only to the current blockscope
     if (islet) {
       funct["(blockscope)"].current.add(name, type, state.tokens.curr);
-      if (funct["(blockscope)"].atTop() && exported[name]) {
-        state.tokens.curr.exported = true;
-      }
     } else {
       funct["(blockscope)"].shadow(name);
       funct[name] = type;
@@ -901,15 +896,6 @@ var JSHINT = (function () {
     return t;
   }
 
-  function peekIgnoreEOL() {
-    var i = 0;
-    var t;
-    do {
-      t = peek(i++);
-    } while (t.id === "(endline)");
-    return t;
-  }
-
   // Produce the next token. It looks for programming errors.
 
   function advance(id, t) {
@@ -1013,8 +999,7 @@ var JSHINT = (function () {
   // They are elements of the parsing method called Top Down Operator Precedence.
 
   function expression(rbp, initial) {
-    var left, isArray = false, isObject = false, isLetExpr = false,
-      isFatArrowBody = state.tokens.curr.value === "=>";
+    var left, isArray = false, isObject = false, isLetExpr = false;
 
     // if current expression is a let expression
     if (!initial && state.tokens.next.value === "let" && peek(0).value === "(") {
@@ -1104,12 +1089,6 @@ var JSHINT = (function () {
     if (isLetExpr) {
       funct["(blockscope)"].unstack();
     }
-
-    if (state.option.singleGroups && left && left.paren && !left.exprs &&
-      !isFatArrowBody && !left.triggerFnExpr) {
-      warning("W126");
-    }
-
     return left;
   }
 
@@ -1556,9 +1535,8 @@ var JSHINT = (function () {
   // fnparam means that this identifier is being defined as a function
   // argument (see identifier())
   // prop means that this identifier is that of an object property
-  // exported means that the identifier is part of a valid ES6 `export` declaration
 
-  function optionalidentifier(fnparam, prop, preserve, exported) {
+  function optionalidentifier(fnparam, prop, preserve) {
     if (!state.tokens.next.identifier) {
       return;
     }
@@ -1569,10 +1547,6 @@ var JSHINT = (function () {
 
     var curr = state.tokens.curr;
     var val  = state.tokens.curr.value;
-
-    if (exported) {
-      state.tokens.curr.exported = true;
-    }
 
     if (!isReserved(curr)) {
       return val;
@@ -1595,20 +1569,22 @@ var JSHINT = (function () {
   // fnparam means that this identifier is being defined as a function
   // argument
   // prop means that this identifier is that of an object property
-  // `exported` means that the identifier token should be exported.
-  function identifier(fnparam, prop, exported) {
-    var i = optionalidentifier(fnparam, prop, false, exported);
+  function identifier(fnparam, prop) {
+    var i = optionalidentifier(fnparam, prop);
     if (i) {
       return i;
     }
-
-    // parameter destructuring with rest operator
-    if (state.tokens.next.value === "...") {
-      if (!state.option.esnext) {
-        warning("W119", state.tokens.next, "spread/rest operator");
-      }
+    if (state.tokens.curr.id === "function" && state.tokens.next.id === "(") {
+      warning("W025");
     } else {
-      error("E030", state.tokens.next, state.tokens.next.value);
+      // parameter destructuring with rest operator
+      if (state.tokens.next.value === "...") {
+        if (!state.option.esnext) {
+          warning("W119", state.tokens.next, "spread/rest operator");
+        }
+      } else {
+        error("E030", state.tokens.next, state.tokens.next.value);
+      }
     }
   }
 
@@ -1800,46 +1776,53 @@ var JSHINT = (function () {
   function directives() {
     var i, p, pn;
 
-    while (state.tokens.next.id === "(string)") {
-      p = peek(0);
-      if (p.id === "(endline)") {
-        i = 1;
-        do {
-          pn = peek(i++);
-        } while (pn.id === "(endline)");
-        if (pn.id === ";") {
-          p = pn;
-        } else if (pn.value === "[" || pn.value === ".") {
-          // string -> [ | . is a valid production
-          return;
-        } else if (!state.option.asi || pn.value === "(") {
-          // string -> ( is not a valid production
-          warning("W033", state.tokens.next);
+    for (;;) {
+      if (state.tokens.next.id === "(string)") {
+        p = peek(0);
+        if (p.id === "(endline)") {
+          i = 1;
+          do {
+            pn = peek(i);
+            i = i + 1;
+          } while (pn.id === "(endline)");
+
+          if (pn.id !== ";") {
+            if (pn.id !== "(string)" && pn.id !== "(number)" &&
+              pn.id !== "(regexp)" && pn.identifier !== true &&
+              pn.id !== "}") {
+              break;
+            }
+            warning("W033", state.tokens.next);
+          } else {
+            p = pn;
+          }
+        } else if (p.id === "}") {
+          // Directive with no other statements, warn about missing semicolon
+          warning("W033", p);
+        } else if (p.id !== ";") {
+          break;
         }
-      } else if (p.id === "." || p.id === "[") {
-        return;
-      } else if (p.id !== ";") {
-        warning("W033", p);
-      }
 
-      advance();
-      if (state.directive[state.tokens.curr.value]) {
-        warning("W034", state.tokens.curr, state.tokens.curr.value);
-      }
-
-      if (state.tokens.curr.value === "use strict") {
-        if (!state.option["(explicitNewcap)"]) {
-          state.option.newcap = true;
+        advance();
+        if (state.directive[state.tokens.curr.value]) {
+          warning("W034", state.tokens.curr, state.tokens.curr.value);
         }
-        state.option.undef = true;
-      }
 
-      // there's no directive negation, so always set to true
-      state.directive[state.tokens.curr.value] = true;
+        if (state.tokens.curr.value === "use strict") {
+          if (!state.option["(explicitNewcap)"])
+            state.option.newcap = true;
+          state.option.undef = true;
+        }
 
-      if (p.id === ";") {
-        advance(";");
+        // there's no directive negation, so always set to true
+        state.directive[state.tokens.curr.value] = true;
+
+        if (p.id === ";") {
+          advance(";");
+        }
+        continue;
       }
+      break;
     }
   }
 
@@ -2069,6 +2052,33 @@ var JSHINT = (function () {
           warning("W037", state.tokens.curr, v);
           break;
         }
+      } else if (funct["(global)"]) {
+        // The name is not defined in the function.  If we are in the global
+        // scope, then we have an undefined variable.
+        //
+        // Operators typeof and delete do not raise runtime errors even if
+        // the base object of a reference is null so no need to display warning
+        // if we're inside of typeof or delete.
+
+        if (typeof predefined[v] !== "boolean") {
+          // Attempting to subscript a null reference will throw an
+          // error, even within the typeof and delete operators
+          if (!(anonname === "typeof" || anonname === "delete") ||
+            (state.tokens.next && (state.tokens.next.value === "." ||
+              state.tokens.next.value === "["))) {
+
+            // if we're in a list comprehension, variables are declared
+            // locally and used before being defined. So we check
+            // the presence of the given variable in the comp array
+            // before declaring it undefined.
+
+            if (!funct["(comparray)"].check(v)) {
+              isundef(funct, "W117", state.tokens.curr, v);
+            }
+          }
+        }
+
+        note_implied(state.tokens.curr);
       } else {
         // If the name is already defined in the current
         // function, but not as outer, then there is a scope error.
@@ -2105,21 +2115,9 @@ var JSHINT = (function () {
               (state.tokens.next &&
                 (state.tokens.next.value === "." || state.tokens.next.value === "["))) {
 
-              // if we're in a list comprehension, variables are declared
-              // locally and used before being defined. So we check
-              // the presence of the given variable in the comp array
-              // before declaring it undefined.
-
-              if (!funct["(comparray)"].check(v)) {
-                isundef(funct, "W117", state.tokens.curr, v);
-              }
+              isundef(funct, "W117", state.tokens.curr, v);
             }
-
-            // Explicitly mark the variable as used within function scopes
-            if (!funct["(global)"]) {
-              funct[v] = true;
-            }
-
+            funct[v] = true;
             note_implied(state.tokens.curr);
           } else {
             switch (s[v]) {
@@ -2203,8 +2201,7 @@ var JSHINT = (function () {
   reservevar("Infinity");
   reservevar("null");
   reservevar("this", function (x) {
-    if (state.directive["use strict"] && !isMethod() &&
-        !state.option.validthis && ((funct["(statement)"] &&
+    if (state.directive["use strict"] && !state.option.validthis && ((funct["(statement)"] &&
         funct["(name)"].charAt(0) > "Z") || funct["(global)"])) {
       warning("W040", x);
     }
@@ -2440,11 +2437,6 @@ var JSHINT = (function () {
         case "JSON":
           warning("W053", state.tokens.prev, c.value);
           break;
-        case "Symbol":
-          if (state.option.esnext) {
-            warning("W053", state.tokens.prev, c.value);
-          }
-          break;
         case "Function":
           if (!state.option.evil) {
             warning("W054");
@@ -2589,7 +2581,7 @@ var JSHINT = (function () {
   prefix("(", function () {
     var bracket, brackets = [];
     var pn, pn1, i = 0;
-    var ret, triggerFnExpr;
+    var ret;
     var parens = 1;
 
     do {
@@ -2607,7 +2599,7 @@ var JSHINT = (function () {
              pn1.value !== "=>" && pn1.value !== ";" && pn1.type !== "(end)");
 
     if (state.tokens.next.id === "function") {
-      triggerFnExpr = state.tokens.next.immed = true;
+      state.tokens.next.immed = true;
     }
 
     var exprs = [];
@@ -2634,7 +2626,7 @@ var JSHINT = (function () {
     advance(")", this);
     if (state.option.immed && exprs[0] && exprs[0].id === "function") {
       if (state.tokens.next.id !== "(" &&
-        state.tokens.next.id !== "." && state.tokens.next.id !== "[") {
+        (state.tokens.next.id !== "." || (peek().value !== "call" && peek().value !== "apply"))) {
         warning("W068", this);
       }
     }
@@ -2653,7 +2645,6 @@ var JSHINT = (function () {
     }
     if (ret) {
       ret.paren = true;
-      ret.triggerFnExpr = triggerFnExpr;
     }
     return ret;
   });
@@ -2787,26 +2778,8 @@ var JSHINT = (function () {
   });
 
 
-  function isMethod() {
-    return funct["(statement)"] && funct["(statement)"].type === "class" ||
-           funct["(context)"] && funct["(context)"]["(verb)"] === "class";
-  }
-
-
-  function isPropertyName(token) {
-    return token.identifier || token.id === "(string)" || token.id === "(number)";
-  }
-
-
-  function propertyName(preserveOrToken) {
-    var id;
-    var preserve = true;
-    if (typeof preserveOrToken === "object") {
-      id = preserveOrToken;
-    } else {
-      preserve = preserveOrToken;
-      id = optionalidentifier(false, true, preserve);
-    }
+  function propertyName(preserve) {
+    var id = optionalidentifier(false, true, preserve);
 
     if (!id) {
       if (state.tokens.next.id === "(string)") {
@@ -2820,9 +2793,6 @@ var JSHINT = (function () {
           advance();
         }
       }
-    } else if (typeof id === "object") {
-      if (id.id === "(string)" || id.id === "(identifier)") id = id.value;
-      else if (id.id === "(number)") id = id.value.toString();
     }
 
     if (id === "hasOwnProperty") {
@@ -3030,8 +3000,7 @@ var JSHINT = (function () {
 
     block(false, true, true, fatarrowparams ? true : false);
 
-    if (!state.option.noyield && generator &&
-        funct["(generator)"] !== "yielded") {
+    if (!state.option.noyield && generator && funct["(generator)"] !== "yielded") {
       warning("W124", state.tokens.curr);
     }
 
@@ -3129,9 +3098,52 @@ var JSHINT = (function () {
 
 
   (function (x) {
-    x.nud = function () {
-      var b, f, i, p, t, g, nextVal;
+    x.nud = function (isclassdef) {
+      var b, f, i, p, t, g;
       var props = {}; // All properties, including accessors
+      var tag = "";
+
+      function saveProperty(name, tkn) {
+
+        if (tkn.identifier) {
+          name = tkn.value;
+        }
+
+        if (props[name] && _.has(props, name)) {
+          warning("W075", state.tokens.next, i);
+        } else {
+          props[name] = {};
+        }
+
+        props[name].basic = true;
+        props[name].basictkn = tkn;
+      }
+
+      function saveSetter(name, tkn) {
+        if (props[name] && _.has(props, name)) {
+          if (props[name].basic || props[name].setter) {
+            warning("W075", state.tokens.next, i);
+          }
+        } else {
+          props[name] = {};
+        }
+
+        props[name].setter = true;
+        props[name].setterToken = tkn;
+      }
+
+      function saveGetter(name) {
+        if (props[name] && _.has(props, name)) {
+          if (props[name].basic || props[name].getter) {
+            warning("W075", state.tokens.next, i);
+          }
+        } else {
+          props[name] = {};
+        }
+
+        props[name].getter = true;
+        props[name].getterToken = state.tokens.curr;
+      }
 
       b = state.tokens.curr.line !== state.tokens.next.line;
       if (b) {
@@ -3146,11 +3158,15 @@ var JSHINT = (function () {
           break;
         }
 
-        nextVal = state.tokens.next.value;
-        if (peek().id !== ":" && (nextVal === "get" || nextVal === "set")) {
-          advance(nextVal);
+        if (isclassdef && state.tokens.next.value === "static") {
+          advance("static");
+          tag = "static ";
+        }
 
-          if (!state.option.inES5()) {
+        if (state.tokens.next.value === "get" && peek().id !== ":") {
+          advance("get");
+
+          if (!state.option.inES5(!isclassdef)) {
             error("E034");
           }
 
@@ -3163,14 +3179,16 @@ var JSHINT = (function () {
             error("E035");
           }
 
+          // It is a Syntax Error if PropName of MethodDefinition is
+          // "constructor" and SpecialMethod of MethodDefinition is true.
+          if (isclassdef && i === "constructor") {
+            error("E049", state.tokens.next, "class getter method", i);
+          }
+
           // We don't want to save this getter unless it's an actual getter
           // and not an ES6 concise method
           if (i) {
-            if (nextVal === "get") {
-              saveGetter(props, i);
-            } else {
-              saveSetter(props, i, state.tokens.next);
-            }
+            saveGetter(tag + i);
           }
 
           t = state.tokens.next;
@@ -3178,9 +3196,43 @@ var JSHINT = (function () {
           p = f["(params)"];
 
           // Don't warn about getter/setter pairs if this is an ES6 concise method
-          if (nextVal === "get" && i && p) {
+          if (i && p) {
             warning("W076", t, p[0], i);
-          } else if (nextVal === "set" && i && (!p || p.length !== 1)) {
+          }
+        } else if (state.tokens.next.value === "set" && peek().id !== ":") {
+          advance("set");
+
+          if (!state.option.inES5(!isclassdef)) {
+            error("E034");
+          }
+
+          i = propertyName();
+
+          // ES6 allows for get() {...} and set() {...} method
+          // definition shorthand syntax, so we don't produce an error
+          // if the esnext option is enabled.
+          if (!i && !state.option.inESNext()) {
+            error("E035");
+          }
+
+          // It is a Syntax Error if PropName of MethodDefinition is
+          // "constructor" and SpecialMethod of MethodDefinition is true.
+          if (isclassdef && i === "constructor") {
+            error("E049", state.tokens.next, "class setter method", i);
+          }
+
+          // We don't want to save this getter unless it's an actual getter
+          // and not an ES6 concise method
+          if (i) {
+            saveSetter(tag + i, state.tokens.next);
+          }
+
+          t = state.tokens.next;
+          f = doFunction();
+          p = f["(params)"];
+
+          // Don't warn about getter/setter pairs if this is an ES6 concise method
+          if (i && (!p || p.length !== 1)) {
             warning("W077", t, i);
           }
         } else {
@@ -3192,25 +3244,22 @@ var JSHINT = (function () {
             advance("*");
             g = true;
           }
-          if (state.tokens.next.identifier &&
-              (peekIgnoreEOL().id === "," || peekIgnoreEOL().id === "}")) {
+          if (!isclassdef &&
+              state.tokens.next.identifier &&
+              (peek().id === "," || peek().id === "}")) {
             if (!state.option.inESNext()) {
-              warning("W104", state.tokens.next, "object short notation");
+              warning("W104", state.tokens.curr, "object short notation");
             }
             i = propertyName(true);
-            saveProperty(props, i, state.tokens.next);
+            saveProperty(tag + i, state.tokens.next);
 
             expression(10);
           } else {
-            if (state.tokens.next.id === "[") {
-              i = computedPropertyName();
-            } else {
-              i = propertyName();
-              saveProperty(props, i, state.tokens.next);
+            i = propertyName();
+            saveProperty(tag + i, state.tokens.next);
 
-              if (typeof i !== "string") {
-                break;
-              }
+            if (typeof i !== "string") {
+              break;
             }
 
             if (state.tokens.next.value === "(") {
@@ -3218,15 +3267,22 @@ var JSHINT = (function () {
                 warning("W104", state.tokens.curr, "concise methods");
               }
               doFunction(i, undefined, g);
-            } else {
+            } else if (!isclassdef) {
               advance(":");
               expression(10);
             }
           }
         }
+        // It is a Syntax Error if PropName of MethodDefinition is "prototype".
+        if (isclassdef && i === "prototype") {
+          error("E049", state.tokens.next, "class method", i);
+        }
 
         countMember(i);
-
+        if (isclassdef) {
+          tag = "";
+          continue;
+        }
         if (state.tokens.next.id === ",") {
           comma({ allowTrailing: true, property: true });
           if (state.tokens.next.id === ",") {
@@ -3579,89 +3635,8 @@ var JSHINT = (function () {
     state.directive["use strict"] = true;
     advance("{");
     // ClassBody(opt)
-    c.body = classbody(c);
-    advance("}");
+    c.body = state.syntax["{"].nud(true);
     state.directive["use strict"] = strictness;
-  }
-
-  function classbody(c) {
-    var name;
-    var isStatic;
-    var getset;
-    var props = {};
-    var staticProps = {};
-    var computed;
-    for (var i = 0; state.tokens.next.id !== "}"; ++i) {
-      name = state.tokens.next;
-      isStatic = false;
-      getset = null;
-      if (name.id === "[") {
-        name = computedPropertyName();
-      } else if (isPropertyName(name)) {
-        // Non-Computed PropertyName
-        advance();
-        computed = false;
-        if (name.identifier && name.value === "static") {
-          if (isPropertyName(state.tokens.next) || state.tokens.next.id === "[") {
-            computed = state.tokens.next.id === "[";
-            isStatic = true;
-            name = state.tokens.next;
-            if (state.tokens.next.id === "[") {
-              name = computedPropertyName();
-            } else advance();
-          }
-        }
-
-        if (name.identifier && (name.value === "get" || name.value === "set")) {
-          if (isPropertyName(state.tokens.next) || state.tokens.next.id === "[") {
-            computed = state.tokens.next.id === "[";
-            getset = name;
-            name = state.tokens.next;
-            if (state.tokens.next.id === "[") {
-              name = computedPropertyName();
-            } else advance();
-          }
-        }
-      } else {
-        warning("W052", state.tokens.next, state.tokens.next.value || state.tokens.next.type);
-        advance();
-        continue;
-      }
-
-      if (!checkPunctuators(state.tokens.next, ["("])) {
-        // error --- class properties must be methods
-        error("E054", state.tokens.next, state.tokens.next.value);
-        while (state.tokens.next.id !== "}" &&
-               !checkPunctuators(state.tokens.next, ["("])) {
-          advance();
-        }
-        if (state.tokens.next.value !== "(") {
-          doFunction(undefined, c, false, null);
-        }
-      }
-
-      if (!computed) {
-        // We don't know how to determine if we have duplicate computed property names :(
-        if (getset) {
-          if (getset.value === "get") {
-            saveGetter(isStatic ? staticProps : props, name.value, true, isStatic);
-          } else {
-            saveSetter(isStatic ? staticProps : props, name.value, name, true, isStatic);
-          }
-        } else {
-          saveProperty(isStatic ? staticProps : props, name.value, name, true, isStatic);
-        }
-      }
-
-      if (getset && name.value === "constructor") {
-        var propDesc = getset.value === "get" ? "class getter method" : "class setter method";
-        error("E049", name, propDesc, "constructor");
-      } else if (name.value === "prototype") {
-        error("E049", name, "class method", "prototype");
-      }
-
-      doFunction(!computed && propertyName(name), c, false, null);
-    }
   }
 
   blockstmt("function", function () {
@@ -3678,12 +3653,7 @@ var JSHINT = (function () {
       warning("W082", state.tokens.curr);
 
     }
-    var i = optionalidentifier();
-
-    if (i === undefined) {
-      warning("W025");
-    }
-
+    var i = identifier();
     if (funct[i] === "const") {
       warning("E011", null, i);
     }
@@ -3698,7 +3668,6 @@ var JSHINT = (function () {
 
   prefix("function", function () {
     var generator = false;
-
     if (state.tokens.next.value === "*") {
       if (!state.option.inESNext()) {
         warning("W119", state.tokens.curr, "function*");
@@ -3706,20 +3675,10 @@ var JSHINT = (function () {
       advance("*");
       generator = true;
     }
-
     var i = optionalidentifier();
-    var fn = doFunction(i, undefined, generator);
-
-    function isVariable(name) { return name[0] !== "("; }
-    function isLocal(name) { return fn[name] === "var"; }
-
+    doFunction(i, undefined, generator);
     if (!state.option.loopfunc && funct["(loopage)"]) {
-      // If the function we just parsed accesses any non-local variables
-      // trigger a warning. Otherwise, the function is safe even within
-      // a loop.
-      if (_.some(fn, function (val, name) { return isVariable(name) && !isLocal(name); })) {
-        warning("W083");
-      }
+      warning("W083");
     }
     return this;
   });
@@ -4068,9 +4027,7 @@ var JSHINT = (function () {
         case "var":
           break;
         default:
-          var ident = state.tokens.next.value;
-          if (!funct["(blockscope)"].getlabel(ident) &&
-              !(scope[ident] || {})[ident])
+          if (!funct["(blockscope)"].getlabel(state.tokens.next.value))
             warning("W088", state.tokens.next, state.tokens.next.value);
         }
         advance();
@@ -4098,7 +4055,7 @@ var JSHINT = (function () {
       if (nextop.value === "in" && state.option.forin) {
         if (state.forinifchecks && state.forinifchecks.length > 0) {
           var check = state.forinifchecks.pop();
-
+          
           if (// No if statement or not the first statement in loop body
               s && s.length > 0 && (typeof s[0] !== "object" || s[0].value !== "if") ||
               // Positive if statement is not the only one in loop body
@@ -4108,7 +4065,7 @@ var JSHINT = (function () {
             warning("W089", this);
           }
         }
-
+        
         // Reset the flag in case no if statement was contained in the loop body
         state.forinifcheckneeded = false;
       }
@@ -4259,17 +4216,8 @@ var JSHINT = (function () {
       warning("W104", state.tokens.curr, "yield");
     }
     funct["(generator)"] = "yielded";
-    var delegatingYield = false;
-
-    if (state.tokens.next.value === "*") {
-      delegatingYield = true;
-      advance("*");
-    }
-
     if (this.line === state.tokens.next.line || !state.option.inMoz(true)) {
-      if (delegatingYield ||
-          (state.tokens.next.id !== ";" && !state.tokens.next.reach && state.tokens.next.nud)) {
-
+      if (state.tokens.next.id !== ";" && !state.tokens.next.reach && state.tokens.next.nud) {
         nobreaknonadjacent(state.tokens.curr, state.tokens.next);
         this.first = expression(10);
 
@@ -4303,23 +4251,12 @@ var JSHINT = (function () {
     }
 
     if (state.tokens.next.type === "(string)") {
-      // ModuleSpecifier :: StringLiteral
       advance("(string)");
       return this;
     }
-
     if (state.tokens.next.identifier) {
-      // ImportClause :: ImportedDefaultBinding
       this.name = identifier();
       addlabel(this.name, { type: "unused", token: state.tokens.curr });
-    } else if (state.tokens.next.id === "*") {
-      // ImportClause :: NameSpaceImport
-      advance("*");
-      advance("as");
-      if (state.tokens.next.identifier) {
-        this.name = identifier();
-        addlabel(this.name, { type: "unused", token: state.tokens.curr });
-      }
     } else {
       advance("{");
       for (;;) {
@@ -4352,22 +4289,14 @@ var JSHINT = (function () {
       }
     }
 
-    // FromClause
     advance("from");
     advance("(string)");
     return this;
   }).exps = true;
 
   stmt("export", function () {
-    var ok = true;
     if (!state.option.inESNext()) {
       warning("W119", state.tokens.curr, "export");
-      ok = false;
-    }
-
-    if (!funct["(global)"] || !funct["(blockscope)"].atTop()) {
-      error("E053", state.tokens.curr);
-      ok = false;
     }
 
     if (state.tokens.next.value === "*") {
@@ -4390,11 +4319,7 @@ var JSHINT = (function () {
     if (state.tokens.next.value === "{") {
       advance("{");
       for (;;) {
-        var id;
-        exported[id = identifier(false, false, ok)] = ok;
-        if (ok) {
-          funct["(blockscope)"].setExported(id);
-        }
+        exported[identifier()] = true;
 
         if (state.tokens.next.value === ",") {
           advance(",");
@@ -4411,30 +4336,25 @@ var JSHINT = (function () {
 
     if (state.tokens.next.id === "var") {
       advance("var");
-      exported[state.tokens.next.value] = ok;
-      state.tokens.next.exported = true;
+      exported[state.tokens.next.value] = true;
       state.syntax["var"].fud.call(state.syntax["var"].fud);
     } else if (state.tokens.next.id === "let") {
       advance("let");
-      exported[state.tokens.next.value] = ok;
-      state.tokens.next.exported = true;
+      exported[state.tokens.next.value] = true;
       state.syntax["let"].fud.call(state.syntax["let"].fud);
     } else if (state.tokens.next.id === "const") {
       advance("const");
-      exported[state.tokens.next.value] = ok;
-      state.tokens.next.exported = true;
+      exported[state.tokens.next.value] = true;
       state.syntax["const"].fud.call(state.syntax["const"].fud);
     } else if (state.tokens.next.id === "function") {
       this.block = true;
       advance("function");
-      exported[state.tokens.next.value] = ok;
-      state.tokens.next.exported = true;
+      exported[state.tokens.next.value] = true;
       state.syntax["function"].fud();
     } else if (state.tokens.next.id === "class") {
       this.block = true;
       advance("class");
-      exported[state.tokens.next.value] = ok;
-      state.tokens.next.exported = true;
+      exported[state.tokens.next.value] = true;
       state.syntax["class"].fud();
     } else {
       error("E024", state.tokens.next, state.tokens.next.value);
@@ -4474,7 +4394,7 @@ var JSHINT = (function () {
   FutureReservedWord("transient");
   FutureReservedWord("volatile");
 
-  // this function is used to determine whether a squarebracket or a curlybracket
+  // this function is used to determine wether a squarebracket or a curlybracket
   // expression is a comprehension array, destructuring assignment or a json value.
 
   var lookupBlockType = function () {
@@ -4482,15 +4402,15 @@ var JSHINT = (function () {
     var i = -1;
     var bracketStack = 0;
     var ret = {};
-    if (checkPunctuators(state.tokens.curr, ["[", "{"]))
+    if (_.contains(["[", "{"], state.tokens.curr.value))
       bracketStack += 1;
     do {
       pn = (i === -1) ? state.tokens.next : peek(i);
       pn1 = peek(i + 1);
       i = i + 1;
-      if (checkPunctuators(pn, ["[", "{"])) {
+      if (_.contains(["[", "{"], pn.value)) {
         bracketStack += 1;
-      } else if (checkPunctuators(pn, ["]", "}"])) {
+      } else if (_.contains(["]", "}"], pn.value)) {
         bracketStack -= 1;
       }
       if (pn.identifier && pn.value === "for" && bracketStack === 1) {
@@ -4498,7 +4418,7 @@ var JSHINT = (function () {
         ret.notJson = true;
         break;
       }
-      if (checkPunctuators(pn, ["}", "]"]) && bracketStack === 0) {
+      if (_.contains(["}", "]"], pn.value) && bracketStack === 0) {
         if (pn1.value === "=") {
           ret.isDestAssign = true;
           ret.notJson = true;
@@ -4515,68 +4435,6 @@ var JSHINT = (function () {
     } while (bracketStack > 0 && pn.id !== "(end)" && i < 15);
     return ret;
   };
-
-  function saveProperty(props, name, tkn, isClass, isStatic) {
-    var msg = ["key", "class method", "static class method"];
-    msg = msg[(isClass || false) + (isStatic || false)];
-    if (tkn.identifier) {
-      name = tkn.value;
-    }
-
-    if (props[name] && _.has(props, name)) {
-      warning("W075", state.tokens.next, msg, name);
-    } else {
-      props[name] = {};
-    }
-
-    props[name].basic = true;
-    props[name].basictkn = tkn;
-  }
-
-  function saveSetter(props, name, tkn, isClass, isStatic) {
-    var msg = ["key", "setter method", "static setter method"];
-    msg = msg[(isClass || false) + (isStatic || false)];
-    if (props[name] && _.has(props, name)) {
-      if (props[name].basic || props[name].setter) {
-        warning("W075", state.tokens.next, msg, name);
-      }
-    } else {
-      props[name] = {};
-    }
-
-    props[name].setter = true;
-    props[name].setterToken = tkn;
-  }
-
-  function saveGetter(props, name, isClass, isStatic) {
-    var msg = ["key", "getter method", "static getter method"];
-    msg = msg[(isClass || false) + (isStatic || false)];
-    if (props[name] && _.has(props, name)) {
-      if (props[name].basic || props[name].getter) {
-        warning("W075", state.tokens.next, msg, name);
-      }
-    } else {
-      props[name] = {};
-    }
-
-    props[name].getter = true;
-    props[name].getterToken = state.tokens.curr;
-  }
-
-  function computedPropertyName() {
-    advance("[");
-    if (!state.option.esnext) {
-      warning("W119", state.tokens.curr, "computed property names");
-    }
-    var value = expression(10);
-    advance("]");
-    return value;
-  }
-
-  // Test whether a given token is a punctuator matching one of the specified values
-  function checkPunctuators(token, values) {
-    return token.type === "(punctuator)" && _.contains(values, token.value);
-  }
 
   // Check whether this function has been reached for a destructuring assign with undeclared values
   function destructuringAssignOrJsonValue() {
@@ -4643,7 +4501,7 @@ var JSHINT = (function () {
         unstack: function () {
           _current.variables.filter(function (v) {
             if (v.unused)
-              warning("W098", v.token, v.raw_text || v.value);
+              warning("W098", v.token, v.value);
             if (v.undef)
               isundef(v.funct, "W117", v.token, v.value);
           });
@@ -4796,10 +4654,6 @@ var JSHINT = (function () {
         if (_current[t]["(type)"] === "unused") {
           if (state.option.unused) {
             var tkn = _current[t]["(token)"];
-            // Don't report exported labels as unused
-            if (tkn.exported) {
-              continue;
-            }
             var line = tkn.line;
             var chr  = tkn.character;
             warningAt("W098", line, chr, t);
@@ -4840,19 +4694,6 @@ var JSHINT = (function () {
         for (var i = _variables.length - 1; i >= 0; i--) {
           if (_.has(_variables[i], name)) {
             _variables[i][name]["(shadowed)"] = false;
-          }
-        }
-      },
-
-      atTop: function () {
-        return _variables.length === 1;
-      },
-
-      setExported: function (id) {
-        if (funct["(blockscope)"].atTop()) {
-          var item = _current[id];
-          if (item && item["(token)"]) {
-            item["(token)"].exported = true;
           }
         }
       },
@@ -5144,7 +4985,6 @@ var JSHINT = (function () {
       var warnUnused = function (name, tkn, type, unused_opt) {
         var line = tkn.line;
         var chr  = tkn.from;
-        var raw_name = tkn.raw_text || name;
 
         if (unused_opt === undefined) {
           unused_opt = state.option.unused;
@@ -5162,9 +5002,7 @@ var JSHINT = (function () {
 
         if (unused_opt) {
           if (warnable_types[unused_opt] && warnable_types[unused_opt].indexOf(type) !== -1) {
-            if (!tkn.exported) {
-              warningAt("W098", line, chr, raw_name);
-            }
+            warningAt("W098", line, chr, name);
           }
         }
 

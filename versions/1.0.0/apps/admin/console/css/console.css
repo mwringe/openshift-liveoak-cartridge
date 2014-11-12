@@ -1319,8 +1319,8 @@ legend.collapsible.collapsed {
 }
 .advanced-search .popover {
   display: block;
-  width: 400px;
-  max-width: 400px;
+  width: 500px;
+  max-width: 500px;
   padding: 15px;
   position: absolute;
   top: 28px;
@@ -1344,7 +1344,7 @@ legend.collapsible.collapsed {
   margin-bottom: 4px;
 }
 .advanced-search .inline-items .form-control {
-  width: calc(100% - 137px);
+  width: calc(100% - 250px);
 }
 .advanced-search:last-child {
   margin-bottom: 15px;

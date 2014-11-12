@@ -147,7 +147,7 @@ exports['combination of latedef and undef'] = function (test) {
   TestRun(test)
     .test(src, { es3: true, latedef: false, undef: false });
 
-  // If we warn on `latedef` but suppress `undef` we only get the
+  // If we warn on `latedef` but supress `undef` we only get the
   // late definition warnings.
   TestRun(test)
     .addError(5, "'func2' was used before it was defined.")
@@ -424,6 +424,7 @@ exports.asi = function (test) {
     .test(src, { es3: true });
 
   TestRun(test, 2)
+    .addError(2, "Missing semicolon.") // throw on "use strict", even option asi is used
     .test(src, { es3: true, asi: true });
 
   test.done();
@@ -718,18 +719,16 @@ exports.loopfunc = function (test) {
 
   // By default, not functions are allowed inside loops
   TestRun(test)
-    .addError(4, "Don't make functions within a loop.")
-    .addError(8, "Don't make functions within a loop.")
-    .addError(20, "Don't make functions within a loop.")
-    .addError(25, "Don't make functions within a loop.")
-    .addError(12, "Function declarations should not be placed in blocks. Use a function " +
+    .addError(2, "Don't make functions within a loop.")
+    .addError(6, "Don't make functions within a loop.")
+    .addError(10, "Function declarations should not be placed in blocks. Use a function " +
             "expression or move the statement to the top of the outer function.")
     .test(src, {es3: true});
 
   // When loopfunc is true, only function declaration should fail.
   // Expressions are okay.
   TestRun(test)
-    .addError(12, "Function declarations should not be placed in blocks. Use a function " +
+    .addError(10, "Function declarations should not be placed in blocks. Use a function " +
             "expression or move the statement to the top of the outer function.")
     .test(src, { es3: true, loopfunc: true });
 
@@ -1668,36 +1667,6 @@ exports.ignoreDelimiters = function (test) {
         { start: "foo" },
         { end: "bar" }
       ]
-    });
-
-  test.done();
-};
-
-exports.esnextPredefs = function (test) {
-  var code = [
-    '/* global alert: true */',
-    'var mySym = Symbol("name");',
-    'var myBadSym = new Symbol("name");',
-    'alert(Reflect);',
-    'alert(System);'
-  ];
-
-  TestRun(test)
-    .addError(3, "Do not use Symbol as a constructor.")
-    .test(code, { esnext: true, undef: true });
-
-  test.done();
-};
-
-exports.singleGroups = function (test) {
-  var src = fs.readFileSync(__dirname + "/fixtures/singleGroups.js", "utf8");
-
-  TestRun(test)
-    .addError(5, "Grouping operator is unnecessary for lone expressions.")
-    .addError(7, "Grouping operator is unnecessary for lone expressions.")
-    .test(src, {
-      singleGroups: true,
-      esnext: true
     });
 
   test.done();

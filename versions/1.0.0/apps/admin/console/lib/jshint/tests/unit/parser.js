@@ -305,9 +305,7 @@ exports.numbers = function (test) {
     "var g = 0033;",
     "var h = 3.;",
     "var i = 3.7.toString();",
-    "var j = 1e-10;", // GH-821
-    "var k = 0o1234567;",
-    "var l = 0b101;",
+    "var j = 1e-10;" // GH-821
   ];
 
   TestRun(test)
@@ -319,8 +317,6 @@ exports.numbers = function (test) {
     .addError(7, "Don't use extra leading zeros '0033'.")
     .addError(8, "A trailing decimal point can be confused with a dot: '3.'.")
     .addError(9, "A dot following a number can be confused with a decimal point.")
-    .addError(11, "'Octal integer literal' is only available in ES6 (use esnext option).")
-    .addError(12, "'Binary integer literal' is only available in ES6 (use esnext option).")
     .test(code, {es3: true});
 
   // Octals are prohibited in strict mode.
@@ -341,20 +337,6 @@ exports.numbers = function (test) {
       "var a = .3 + 1;",
       "var b = 1 + .3;",
     ]);
-
-  TestRun(test)
-    .addError(5, "Missing semicolon.")
-    .addError(5, "Expected an assignment or function call and instead saw an expression.")
-    .addError(6, "Missing semicolon.")
-    .addError(6, "Expected an assignment or function call and instead saw an expression.")
-    .test([
-      "var a = 0o1234567;",
-      "var b = 0O1234567;",
-      "var c = 0b101;",
-      "var d = 0B101;",
-      "var e = 0o12345678;",
-      "var f = 0b1012;",
-    ], {esnext: true});
 
   test.done();
 };
@@ -2613,26 +2595,6 @@ exports["test: esnext generator without yield and check turned off"] = function 
   test.done();
 };
 
-exports["test: esnext generator with yield delegation, gh-1544"] = function(test) {
-  var code = [
-    "function* G() {",
-    "  yield* (function*(){})();",
-    "}"
-  ];
-
-  TestRun(test)
-    .addError(1, "'function*' is only available in ES6 (use esnext option).")
-    .addError(2, "'yield' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
-    .addError(2, "'function*' is only available in ES6 (use esnext option).")
-    .addError(2, "A generator function shall contain a yield statement.")
-    .test(code);
-
-
-  TestRun(test).test(code, {esnext: true, noyield: true});
-
-  test.done();
-};
-
 exports["test: mozilla generator"] = function (test) {
   // example taken from https://developer.mozilla.org/en-US/docs/JavaScript/New_in_JavaScript/1.7
   var code = [
@@ -2752,33 +2714,10 @@ exports["test: array comprehension"] = function (test) {
     "var ten_squares = [for (i of range(0, 10)) i * i];",
     "var evens = [for (i of range(0, 21)) if (i % 2 === 0) i];",
     "print('squares:', ten_squares);",
-    "print('evens:', evens);",
-    "(function() {",
-    "  var ten_squares = [for (i of range(0, 10)) i * i];",
-    "  print('squares:', ten_squares);",
-    "}());"
+    "print('evens:', evens);"
   ];
   TestRun(test)
     .test(code, {esnext: true, unused: true, undef: true, predef: ["print"]});
-
-  test.done();
-};
-
-exports["gh-1856 mistakenly identified as array comprehension"] = function (test) {
-  var code = [
-    "function main(value) {",
-    "  var result = ['{'],",
-    "      key;",
-    "  for (key in value) {",
-    "    result.push(key);",
-    "  }",
-    "  return result;",
-    "}",
-    "main({abc:true});"
-  ];
-
-  TestRun(test)
-    .test(code);
 
   test.done();
 };
@@ -3776,20 +3715,14 @@ exports["object short notation: basic"] = function (test) {
   var code = [
     "var foo = 42;",
     "var bar = {foo};",
-    "var baz = {foo, bar};",
-    "var biz = {",
-    "  foo,",
-    "  bar",
-    "};"
+    "var baz = {foo, bar};"
   ];
 
-  TestRun(test, 1).test(code, {esnext: true});
+  TestRun(test).test(code, {esnext: true});
 
-  TestRun(test, 2)
+  TestRun(test)
     .addError(2, "'object short notation' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
     .addError(3, "'object short notation' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
-    .addError(5, "'object short notation' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
-    .addError(6, "'object short notation' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
     .test(code);
 
   test.done();
@@ -3809,45 +3742,6 @@ exports["object short notation: mixed"] = function (test) {
     .addError(2, "'object short notation' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
     .addError(3, "'object short notation' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
     .addError(3, "'object short notation' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
-  .test(code);
-
-  test.done();
-};
-
-exports["object ComputedPropertyName"] = function (test) {
-  var code = [
-    "function fn(obj) {}",
-    "function p() { return 'key'; }",
-    "var vals = [1];",
-    "var a = 7;",
-    "var o1 = {",
-      "[a++]: true,",
-      "obj: { [a++ + 1]: true },",
-      "[a + 3]() {},",
-      "[p()]: true,",
-      "[vals[0]]: true,",
-      "[(1)]: true,",
-    "};",
-    "fn({ [a / 7]: true });",
-    "var b = { '[': 1 };",
-    "var c = { [b]: 1 };",
-    "var d = { 0: 1 };",
-    "var e = { ['s']: 1 };",
-  ];
-
-  TestRun(test).test(code, { esnext: true });
-
-  TestRun(test)
-    .addError(6, "'computed property names' is only available in ES6 (use esnext option).")
-    .addError(7, "'computed property names' is only available in ES6 (use esnext option).")
-    .addError(8, "'concise methods' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
-    .addError(8, "'computed property names' is only available in ES6 (use esnext option).")
-    .addError(9, "'computed property names' is only available in ES6 (use esnext option).")
-    .addError(10, "'computed property names' is only available in ES6 (use esnext option).")
-    .addError(11, "'computed property names' is only available in ES6 (use esnext option).")
-    .addError(13, "'computed property names' is only available in ES6 (use esnext option).")
-    .addError(15, "'computed property names' is only available in ES6 (use esnext option).")
-    .addError(17, "'computed property names' is only available in ES6 (use esnext option).")
   .test(code);
 
   test.done();
@@ -4154,29 +4048,6 @@ exports["class and method naming"] = function (test) {
     "  get constructor() {}",
     "  set constructor(x) {}",
     "  prototype() {}",
-    "  an extra identifier 'in' methodName() {}",
-    "  get foo extraIdent1() {}",
-    "  set foo extraIdent2() {}",
-    "  static some extraIdent3() {}",
-    "  static get an extraIdent4() {}",
-    "  static set an extraIdent5() {}",
-    "  get dupgetter() {}",
-    "  get dupgetter() {}",
-    "  set dupsetter() {}",
-    "  set dupsetter() {}",
-    "  static get dupgetter() {}",
-    "  static get dupgetter() {}",
-    "  static set dupsetter() {}",
-    "  static set dupsetter() {}",
-    "  dupmethod() {}",
-    "  dupmethod() {}",
-    "  static dupmethod() {}",
-    "  static dupmethod() {}",
-    "  ['computed method']() {}",
-    "  static ['computed static']() {}",
-    "  get ['computed getter']() {}",
-    "  set ['computed setter']() {}",
-    "  (typo() {}",
     "}"
   ];
   var run = TestRun(test)
@@ -4184,44 +4055,9 @@ exports["class and method naming"] = function (test) {
     .addError(2, "Expected an identifier and instead saw 'arguments' (a reserved word).")
     .addError(4, "A class getter method cannot be named 'constructor'.")
     .addError(5, "A class setter method cannot be named 'constructor'.")
-    .addError(6, "A class method cannot be named 'prototype'.")
-    .addError(7, "Class properties must be methods. Expected '(' but instead saw 'extra'.")
-    .addError(8, "Class properties must be methods. Expected '(' but instead saw 'extraIdent1'.")
-    .addError(9, "Class properties must be methods. Expected '(' but instead saw 'extraIdent2'.")
-    .addError(10, "Class properties must be methods. Expected '(' but instead saw 'extraIdent3'.")
-    .addError(11, "Class properties must be methods. Expected '(' but instead saw 'extraIdent4'.")
-    .addError(12, "Class properties must be methods. Expected '(' but instead saw 'extraIdent5'.")
-    .addError(14, "Duplicate getter method 'dupgetter'.")
-    .addError(16, "Duplicate setter method 'dupsetter'.")
-    .addError(18, "Duplicate static getter method 'dupgetter'.")
-    .addError(20, "Duplicate static setter method 'dupsetter'.")
-    .addError(22, "Duplicate class method 'dupmethod'.")
-    .addError(24, "Duplicate static class method 'dupmethod'.")
-    .addError(29, "Unexpected '('.");
+    .addError(7, "A class method cannot be named 'prototype'.");
 
   run.test(code, {esnext: true});
-
-  test.done();
-};
-
-exports["class method this"] = function (test) {
-  var code = [
-  "class C {",
-  "  constructor(x) {",
-  "    this._x = x;",
-  "  }",
-  "  x() { return this._x; }",
-  "  static makeC(x) { return new this(x); }",
-  "  0() { return this._x + 0; }",
-  "  ['foo']() { return this._x + 6; }",
-  "  'test'() { return this._x + 'test'; }",
-  "  bar() { function notCtor() { return this; } notCtor(); }",
-  "}"
-  ];
-
-  TestRun(test)
-    .addError(10, "Possible strict violation.")
-    .test(code, {esnext: true});
 
   test.done();
 };
@@ -4581,7 +4417,7 @@ exports["/*jshint ignore */ should allow the linter to skip blocked-out lines to
   var code = fs.readFileSync(__dirname + "/fixtures/gh826.js", "utf8");
 
   TestRun(test)
-    .addError(34, "Use '===' to compare with '0'.")
+    .addError(33, "Use '===' to compare with '0'.")
     .test(code);
 
   test.done();
@@ -4799,151 +4635,5 @@ exports["'for of' shouldn't be subject to 'for in' rules"] = function (test) {
 
 exports["Ignore strings containing braces within array literal declarations"] = function (test) {
   TestRun(test).test("var a = [ '[' ];");
-  test.done();
-};
-
-exports["gh-1016: don't issue W088 if identifier is outside of blockscope"] = function (test) {
-  var code = [
-    "var globalKey;",
-    "function x() {",
-    "  var key;",
-    "  var foo = function () {",
-    "      alert(key);",
-    "  };",
-    "  for (key in {}) {",
-    "      foo();",
-    "  }",
-    "  function y() {",
-    "    for (key in {}) {",
-    "      foo();",
-    "    }",
-    "    for (globalKey in {}) {",
-    "      foo();",
-    "    }",
-    "    for (nonKey in {}) {",
-    "      foo();",
-    "    }",
-    "  }",
-    "}"
-  ];
-
-  TestRun(test)
-    .addError(17, "Creating global 'for' variable. Should be 'for (var nonKey ...'.")
-    .test(code);
-
-  test.done();
-};
-
-exports.testES6UnusedExports = function (test) {
-  var code = [
-    "export {",
-    "  varDefinedLater,",
-    "  letDefinedLater,",
-    "  constDefinedLater",
-    "};",
-    "var unusedGlobalVar = 41;",
-    "let unusedGlobalLet = 41;",
-    "const unusedGlobalConst = 41;",
-    "function unusedGlobalFunc() {}",
-    "class unusedGlobalClass {}",
-    "export let globalExportLet = 42;",
-    "export var globalExportVar = 43;",
-    "export const globalExportConst = 44;",
-    "export function unusedFn() {}",
-    "export class unusedClass {}",
-    "export {",
-    "  unusedGlobalVar,",
-    "  unusedGlobalLet,",
-    "  unusedGlobalConst,",
-    "  unusedGlobalFunc,",
-    "  unusedGlobalClass",
-    "};",
-    "var varDefinedLater = 60;",
-    "let letDefinedLater = 61;",
-    "const constDefinedLater = 62;"
-  ];
-
-  TestRun(test)
-    .test(code, { esnext: true, unused: true });
-
-  test.done();
-};
-
-exports.testES6BlockExports = function (test) {
-  var code = [
-    "var broken = true;",
-    "var broken2 = false;",
-    "function funcScope() {",
-    "  export let exportLet = 42;",
-    "  export var exportVar = 43;",
-    "  export const exportConst = 44;",
-    "  export function exportedFn() {}",
-    "  export {",
-    "    broken,",
-    "    broken2",
-    "  };",
-    "}",
-    "if (true) {",
-    "  export let conditionalExportLet = 42;",
-    "  export var conditionalExportVar = 43;",
-    "  export const conditionalExportConst = 44;",
-    "  export function conditionalExportedFn() {}",
-    "  export {",
-    "    broken,",
-    "    broken2",
-    "  };",
-    "}",
-    "funcScope();"
-  ];
-
-  TestRun(test)
-    .addError(4, "Export declaration must be in global scope.")
-    .addError(5, "Export declaration must be in global scope.")
-    .addError(6, "Export declaration must be in global scope.")
-    .addError(7, "Export declaration must be in global scope.")
-    .addError(8, "Export declaration must be in global scope.")
-    .addError(14, "Export declaration must be in global scope.")
-    .addError(15, "Export declaration must be in global scope.")
-    .addError(16, "Export declaration must be in global scope.")
-    .addError(17, "Export declaration must be in global scope.")
-    .addError(17, "Function declarations should not be placed in blocks. Use a function expression or move the statement to the top of the outer function.")
-    .addError(18, "Export declaration must be in global scope.")
-    .test(code, { esnext: true, unused: true });
-
-  test.done();
-};
-
-exports.testStrictDirectiveASI = function (test) {
-  var options = { strict: true, asi: true, globalstrict: true };
-
-  TestRun(test, 1)
-    .test("'use strict'\nfunction fn() {}\nfn();", options);
-
-  TestRun(test, 2)
-    .test("'use strict'\n;function fn() {}\nfn();", options);
-
-  TestRun(test, 3)
-    .test("'use strict';function fn() {} fn();", options);
-
-  TestRun(test, 4)
-    .addError(1, "Missing semicolon.")
-    .test("'use strict'\n(function fn() {})();", options);
-
-  TestRun(test, 5)
-    .test("'use strict'\n[0] = '6';", options);
-
-  TestRun(test, 6)
-    .addError(1, "Missing semicolon.")
-    .addError(1, "Expected an identifier and instead saw ','.")
-    .addError(1, "Expected an assignment or function call and instead saw an expression.")
-    .test("'use strict',function fn() {}\nfn();", options);
-
-  TestRun(test, 7)
-    .test("'use strict'.split(' ');", options);
-
-  TestRun(test, 8)
-    .addError(1, "Missing \"use strict\" statement.")
-    .test("(function() { var x; \"use strict\"; return x; }());", { strict: true, expr: true });
-
   test.done();
 };

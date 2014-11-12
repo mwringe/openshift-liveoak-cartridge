@@ -378,18 +378,6 @@ exports.insideEval = function (test) {
   test.done();
 };
 
-exports.escapedEvil = function (test) {
-  var code = [
-    "\\u0065val(\"'test'\");"
-  ];
-
-  TestRun(test)
-    .addError(1, "eval can be harmful.")
-    .test(code, { evil: false });
-
-  test.done();
-};
-
 // Regression test for GH-394.
 exports.noExcOnTooManyUndefined = function (test) {
   var code = 'a(); b();';
@@ -679,20 +667,19 @@ exports.testES6Modules = function (test) {
     .addError(6, "'import' is only available in ES6 (use esnext option).")
     .addError(7, "'import' is only available in ES6 (use esnext option).")
     .addError(8, "'import' is only available in ES6 (use esnext option).")
-    .addError(9, "'import' is only available in ES6 (use esnext option).")
-    .addError(20, "'export' is only available in ES6 (use esnext option).")
-    .addError(24, "'export' is only available in ES6 (use esnext option).")
+    .addError(19, "'export' is only available in ES6 (use esnext option).")
+    .addError(23, "'export' is only available in ES6 (use esnext option).")
+    .addError(27, "'export' is only available in ES6 (use esnext option).")
     .addError(28, "'export' is only available in ES6 (use esnext option).")
-    .addError(29, "'export' is only available in ES6 (use esnext option).")
-    .addError(33, "'export' is only available in ES6 (use esnext option).")
-    .addError(37, "'export' is only available in ES6 (use esnext option).")
-    .addError(41, "'export' is only available in ES6 (use esnext option).")
+    .addError(32, "'export' is only available in ES6 (use esnext option).")
+    .addError(36, "'export' is only available in ES6 (use esnext option).")
+    .addError(40, "'export' is only available in ES6 (use esnext option).")
+    .addError(42, "'export' is only available in ES6 (use esnext option).")
+    .addError(42, "'class' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
     .addError(43, "'export' is only available in ES6 (use esnext option).")
-    .addError(44, "'class' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
-    .addError(45, "'export' is only available in ES6 (use esnext option).")
-    .addError(45, "'class' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
-    .addError(44, "'export' is only available in ES6 (use esnext option).")
     .addError(43, "'class' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
+    .addError(44, "'export' is only available in ES6 (use esnext option).")
+    .addError(44, "'class' is available in ES6 (use esnext option) or Mozilla JS extensions (use moz).")
     .test(src, {});
 
   var src2 = [
@@ -755,21 +742,6 @@ exports.testES6ModulesDefaultExportsAffectUnused = function (test) {
   test.done();
 };
 
-exports.testES6ModulesNameSpaceImportsAffectUnused = function (test) {
-  var src = [
-    "import * as angular from 'angular';"
-  ];
-
-  TestRun(test)
-    .addError(1, "'angular' is defined but never used.")
-    .test(src, {
-      esnext: true,
-      unused: true
-    });
-
-  test.done();
-};
-
 exports.testES6TemplateLiterals = function (test) {
   var src = fs.readFileSync(__dirname + "/fixtures/es6-template-literal.js", "utf8");
   TestRun(test)
@@ -799,19 +771,6 @@ exports.testES6TemplateLiteralsUndef = function (test) {
   TestRun(test)
     .addError(2, "'a' is not defined.")
     .test(src, { esnext: true, undef: true });
-
-  test.done();
-};
-
-exports.testES6TemplateLiteralMultiline = function (test) {
-  var src = [
-    'let multiline = `',
-    'this string spans',
-    'multiple lines',
-    '`;'
-  ];
-
-  TestRun(test).test(src, { esnext: true });
 
   test.done();
 };
@@ -920,27 +879,5 @@ exports.testIncorrectJsonDetection = function (test) {
   // Without the bug fix, a JSON lint error will be raised because the parser
   // thinks it is rendering JSON instead of JavaScript.
   TestRun(test).test(src);
-  test.done();
-};
-
-exports.testEscapedReservedWords = function (test) {
-  var code = [
-    'var v\u0061r = 42;',
-    'alert(va\u0072);'
-  ];
-
-  TestRun(test)
-    .addError(1, "Expected an identifier and instead saw 'var' (a reserved word).")
-    .addError(2, "Expected an identifier and instead saw 'var'.")
-    .test(code);
-
-  test.done();
-};
-
-exports.testUnnamedFuncStatement = function (test) {
-  TestRun(test)
-    .addError(1, "Missing name in function declaration.")
-    .test("function() {}");
-
   test.done();
 };
