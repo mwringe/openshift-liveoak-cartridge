@@ -19,8 +19,8 @@ client_result ""
 
 # install the OpenJDK binary from our own github repo
 # NOTE: we have to use our own since we cut down the size for a headless environment
-mkdir $HOME/openjdk
-pushd $HOME/openjdk > /dev/null
+mkdir $OPENSHIFT_LIVEOAK_DIR/openjdk
+pushd $OPENSHIFT_LIVEOAK_DIR/openjdk > /dev/null
   wget https://github.com/mwringe/openshift-liveoak-jdk/archive/master.zip > /dev/null
   unzip master.zip
   mv openshift-liveoak-jdk-master/* .
