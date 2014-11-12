@@ -31,6 +31,11 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>io.liveoak</groupId>
+            <artifactId>liveoak-mongo-internal</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.aerogear</groupId>
             <artifactId>unifiedpush-java-client</artifactId>
         </dependency>

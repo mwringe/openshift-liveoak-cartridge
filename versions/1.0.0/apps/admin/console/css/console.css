@@ -706,17 +706,17 @@ input[type=number].no-spinner::-webkit-outer-spin-button {
 .lo-info-pane ul li:hover .btn-icon {
   visibility: visible;
 }
-.security-list .lo-info-pane .fa {
+.lo-info-pane .chevron-list .fa {
   font-size: 11px;
   color: #aaaaaa;
   margin-top: 3px;
   width: 5px;
 }
-.lo-tutorials .unsecured-list span {
+.lo-info-pane .chevron-list span {
   padding-left: 10px;
   font-size: 13px;
 }
-.lo-tutorials .unsecured-list a {
+.lo-info-pane .chevron-list a {
   padding-left: 10px;
   font-size: 13px;
 }
@@ -1806,14 +1806,30 @@ legend.collapsible.collapsed {
 .next-steps .columns .panel-body .lo-field {
   margin-left: 5px;
 }
-.next-steps .columns .panel-body a {
-  font-size: 14px;
-  margin-top: 20px;
-  margin-bottom: 30px;
-  float: right;
-}
 .next-steps .columns .panel-body p {
   font-size: 16px;
+}
+.next-steps .columns .panel-body ul.actions {
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+.next-steps .columns .panel-body ul.actions li {
+  display: inline-block;
+}
+.next-steps .columns .panel-body ul.actions li + li {
+  margin-left: 8px;
+}
+.next-steps .columns .panel-body ul.actions li + li:before {
+  content: ".";
+  margin-right: 10px;
+  color: #aaaaaa;
+  margin-top: -5px;
+  float: left;
+  margin-top: -4px;
+}
+.next-steps .columns .panel-body ul.actions a {
+  font-size: 14px;
 }
 .next-steps .table {
   display: table;
@@ -1939,7 +1955,17 @@ legend.collapsible.collapsed {
 .lo-db-instances a {
   font-size: 13px;
 }
-/* Security Policies pages */
+/* Security pages */
+.fa-info-circle {
+  font-size: 16px;
+  opacity: 1;
+  margin-left: 5px;
+}
+.security-list .panel .panel-body.empty-instance .fa-info-circle {
+  font-size: 16px;
+  opacity: 1;
+  margin-left: 5px;
+}
 .security-policies .breadcrumb + .nav-tabs {
   margin-top: 25px;
 }

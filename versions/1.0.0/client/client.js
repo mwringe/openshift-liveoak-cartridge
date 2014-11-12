@@ -35,12 +35,10 @@ var LiveOak = function( options ) {
     var auth;
     
     var stompPort = options.port;
-    if (LiveoakDefaultConfig.stomp) {
-      if (options.secure && LiveoakDefaultConfig.stomp.portSecure) {
-        stompPort = LiveoakDefaultConfig.stomp.portSecure;
-      } else if (LiveoakDefaultConfig.stomp.port) {
-        stompPort = LiveoakDefaultConfig.stomp.port;
-      }
+    if (options.secure && typeof LIVEOAK_STOMP_PORT_SECURE != 'undefined') {
+      stompPort = LIVEOAK_STOMP_PORT_SECURE;
+    } else if (typeof LIVEOAK_STOMP_PORT != 'undefined') {
+      stompPort = LIVEOAK_STOMP_PORT;
     }
 
     var stomp_client = new Stomp.Client( options.host, stompPort, options.secure, options.appId );
