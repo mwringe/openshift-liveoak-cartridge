@@ -16,3 +16,11 @@ client_result "  Initial Password: $password"
 client_result ""
 client_result "IMPORTANT: PLEASE MAKE NOTE OF THIS PASSWORD. YOU WILL NEED IT TO LOG INTO LIVEOAK"
 client_result ""
+
+# install the OpenJDK binary from our own github repo
+# NOTE: we have to use our own since we cut down the size for a headless environment
+pushd $OPENSHIFT_LIVEOAK_DIR/openjdk > /dev/null
+  wget https://github.com/mwringe/openshift-liveoak-jdk/archive/master.zip > /dev/null
+  unzip master.zip
+  rm master.zip
+popd > /dev/null
