@@ -29,9 +29,13 @@ pushd $OPENSHIFT_LIVEOAK_DIR/openjdk > /dev/null
   rpm2cpio java-1.8.0-openjdk-headless-1.8.0.25-2.b18.fc19.i686.rpm | cpio -ivd > /dev/null
   rm java-1.8.0-openjdk-headless-1.8.0.25-2.b18.fc19.i686.rpm
 
+  wget http://dl.fedoraproject.org/pub/fedora/linux/updates/19/i386/ca-certificates-2013.1.97-1.fc19.noarch.rpm > /dev/null
+  rpm2cpio ca-certificates-2013.1.97-1.fc19.noarch.rpm | cpio -ivd > /dev/null
+  rm ca-certificates-2013.1.97-1.fc19.noarch.rpm
+
   //fix the broken symlink
-  rm usr/lib/jvm/java-1.8.0-openjdk-1.8.0.25/jre/lib/security/cacerts
-  ln -s /etc/pki/java/cacerts ./usr/lib/jvm/java-1.8.0-openjdk-1.8.0.25/jre/lib/security/cacerts
+#  rm usr/lib/jvm/java-1.8.0-openjdk-1.8.0.25/jre/lib/security/cacerts
+#  ln -s /etc/pki/java/cacerts ./usr/lib/jvm/java-1.8.0-openjdk-1.8.0.25/jre/lib/security/cacerts
 
   echo '$OPENSHIFT_LIVEOAK_DIR/openjdk/usr/lib/jvm/java-1.8.0-openjdk' > $OPENSHIFT_LIVEOAK_DIR/env/JAVA_HOME 
 popd > /dev/null
