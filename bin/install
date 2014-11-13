@@ -29,5 +29,5 @@ pushd $OPENSHIFT_LIVEOAK_DIR/openjdk > /dev/null
   rpm2cpio java-1.8.0-openjdk-headless-1.8.0.25-2.b18.fc19.i686.rpm | cpio -ivd > /dev/null
   rm java-1.8.0-openjdk-headless-1.8.0.25-2.b18.fc19.i686.rpm
 
-  cat '$OPENSHIFT_LIVEOAK_DIR/openjdk/usr/lib/jvm/java-1.8.0-openjdk' > $OPENSHIFT_LIVEOAK_DIR/env/JBOSS_HOME 
+  echo '$OPENSHIFT_LIVEOAK_DIR/openjdk/usr/lib/jvm/java-1.8.0-openjdk' > $OPENSHIFT_LIVEOAK_DIR/env/JAVA_HOME 
 popd > /dev/null
