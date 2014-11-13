@@ -17,13 +17,17 @@ client_result ""
 client_result "IMPORTANT: PLEASE MAKE NOTE OF THIS PASSWORD. YOU WILL NEED IT TO LOG INTO LIVEOAK"
 client_result ""
 
-# install the OpenJDK binary from our own github repo
-# NOTE: we have to use our own since we cut down the size for a headless environment
+# install the OpenJDK binary from the rpms.
+# NOTE: we want this from the rpms since they are headless and take up less space
 mkdir $OPENSHIFT_LIVEOAK_DIR/openjdk
 pushd $OPENSHIFT_LIVEOAK_DIR/openjdk > /dev/null
-  wget https://github.com/mwringe/openshift-liveoak-jdk/archive/master.zip > /dev/null
-  unzip master.zip
-  mv openshift-liveoak-jdk-master/* .
-  rmdir openshift-liveoak-jdk-master
-  rm master.zip
+  wget http://dl.fedoraproject.org/pub/fedora/linux/updates/19/i386/java-1.8.0-openjdk-devel-1.8.0.25-2.b18.fc19.i686.rpm > /dev/null
+  rpm2cpio java-1.8.0-openjdk-devel-1.8.0.25-2.b18.fc19.i686.rpm | cpio -ivd > /dev/null
+  rm java-1.8.0-openjdk-devel-1.8.0.25-2.b18.fc19.i686.rpm > /dev/null
+
+  wget http://dl.fedoraproject.org/pub/fedora/linux/updates/19/i386/java-1.8.0-openjdk-headless-1.8.0.25-2.b18.fc19.i686.rpm > /dev/null
+  rpm2cpio java-1.8.0-openjdk-headless-1.8.0.25-2.b18.fc19.i686.rpm | cpio -ivd > /dev/null
+  rm java-1.8.0-openjdk-headless-1.8.0.25-2.b18.fc19.i686.rpm
+
+  cat '$OPENSHIFT_LIVEOAK_DIR/openjdk/usr/lib/jvm/java-1.8.0-openjdk' > $OPENSHIFT_LIVEOAK_DIR/env/JBOSS_HOME 
 popd > /dev/null
