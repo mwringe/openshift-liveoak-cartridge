@@ -21,21 +21,17 @@ client_result ""
 # NOTE: we want this from the rpms since they are headless and take up less space
 mkdir $OPENSHIFT_LIVEOAK_DIR/openjdk
 pushd $OPENSHIFT_LIVEOAK_DIR/openjdk > /dev/null
-  wget http://dl.fedoraproject.org/pub/fedora/linux/updates/19/i386/java-1.8.0-openjdk-devel-1.8.0.25-2.b18.fc19.i686.rpm > /dev/null
-  rpm2cpio java-1.8.0-openjdk-devel-1.8.0.25-2.b18.fc19.i686.rpm | cpio -ivd > /dev/null
-  rm java-1.8.0-openjdk-devel-1.8.0.25-2.b18.fc19.i686.rpm > /dev/null
+  wget https://kojipkgs.fedoraproject.org//packages/java-1.8.0-openjdk/1.8.0.25/0.b18.fc19/i686/java-1.8.0-openjdk-devel-1.8.0.25-0.b18.fc19.i686.rpm -o /dev/null > /dev/null
+  rpm2cpio java-1.8.0-openjdk-devel-1.8.0.25-0.b18.fc19.i686.rpm  | cpio -id --quiet > /dev/null
+  rm java-1.8.0-openjdk-devel-1.8.0.25-0.b18.fc19.i686.rpm > /dev/null
 
-  wget http://dl.fedoraproject.org/pub/fedora/linux/updates/19/i386/java-1.8.0-openjdk-headless-1.8.0.25-2.b18.fc19.i686.rpm > /dev/null
-  rpm2cpio java-1.8.0-openjdk-headless-1.8.0.25-2.b18.fc19.i686.rpm | cpio -ivd > /dev/null
-  rm java-1.8.0-openjdk-headless-1.8.0.25-2.b18.fc19.i686.rpm
-
-  wget http://dl.fedoraproject.org/pub/fedora/linux/updates/19/i386/ca-certificates-2013.1.97-1.fc19.noarch.rpm > /dev/null
-  rpm2cpio ca-certificates-2013.1.97-1.fc19.noarch.rpm | cpio -ivd > /dev/null
-  rm ca-certificates-2013.1.97-1.fc19.noarch.rpm
+  wget https://kojipkgs.fedoraproject.org//packages/java-1.8.0-openjdk/1.8.0.25/0.b18.fc19/i686/java-1.8.0-openjdk-headless-1.8.0.25-0.b18.fc19.i686.rpm -o /dev/null > /dev/null
+  rpm2cpio java-1.8.0-openjdk-headless-1.8.0.25-0.b18.fc19.i686.rpm | cpio -id --quiet > /dev/null
+  rm java-1.8.0-openjdk-headless-1.8.0.25-0.b18.fc19.i686.rpm > /dev/null
 
   //fix the broken symlink
-#  rm usr/lib/jvm/java-1.8.0-openjdk-1.8.0.25/jre/lib/security/cacerts
-#  ln -s /etc/pki/java/cacerts ./usr/lib/jvm/java-1.8.0-openjdk-1.8.0.25/jre/lib/security/cacerts
+  unlink usr/lib/jvm/java-1.8.0-openjdk-1.8.0.25/jre/lib/security/cacerts
+  ln -s /etc/pki/java/cacerts ./usr/lib/jvm/java-1.8.0-openjdk-1.8.0.25/jre/lib/security/cacerts
 
   echo '$OPENSHIFT_LIVEOAK_DIR/openjdk/usr/lib/jvm/java-1.8.0-openjdk' > $OPENSHIFT_LIVEOAK_DIR/env/JAVA_HOME 
 popd > /dev/null
