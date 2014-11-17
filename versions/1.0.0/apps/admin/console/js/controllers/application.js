@@ -2,7 +2,7 @@
 
 var loMod = angular.module('loApp.controllers.application', []);
 
-loMod.controller('AppListCtrl', function($scope, $rootScope, $routeParams, $location, $modal, $filter, $route, Notifications, examplesList, loAppList, LoApp, LoStorage, LoPush, LoRealmApp, LoBusinessLogicScripts) {
+loMod.controller('AppListCtrl', function($scope, $rootScope, $routeParams, $location, $modal, $filter, $route, Notifications, loAppList, LoApp, LoStorage, LoPush, LoRealmApp, LoBusinessLogicScripts) {
 
   $rootScope.hideSidebar = true;
 
@@ -48,7 +48,8 @@ loMod.controller('AppListCtrl', function($scope, $rootScope, $routeParams, $loca
       id: filtered[i].id,
       name: filtered[i].name,
       visible: filtered[i].visible,
-      htmlapp: filtered[i]['html-app']
+      htmlapp: filtered[i]['html-app'],
+      example: filtered[i].example
     };
     app.url = $location.protocol() + '://' + $location.host() + ':' + $location.port() + '/' + app.id;
     app.storage = LoStorage.getList({appId: app.id});
@@ -56,8 +57,7 @@ loMod.controller('AppListCtrl', function($scope, $rootScope, $routeParams, $loca
     app.mongoStorages = 0;
     app.storage.$promise.then(increaseStorages(app));
 
-    if ($filter('filter')(examplesList, {'id': app.id}, true).length > 0) {
-      app.example = true;
+    if (app.example) {
       $scope.exampleApplications.push(app);
     }
     else {
@@ -316,8 +316,8 @@ loMod.controller('AppListCtrl', function($scope, $rootScope, $routeParams, $loca
 
 });
 
-loMod.controller('AppClientsCtrl', function($scope, $rootScope, $filter, $modal, Notifications, LoRealmApp, loClients,
-                                            LoRealmAppClientScopeMapping, currentApp, loRealmAppClients) {
+loMod.controller('AppClientsCtrl', function($scope, $rootScope, $filter, $modal, $routeParams, Notifications, LoRealmApp,
+                                            loClients, LoRealmAppClientScopeMapping, currentApp, loRealmAppClients) {
 
   $rootScope.curApp = currentApp;
 
@@ -326,6 +326,8 @@ loMod.controller('AppClientsCtrl', function($scope, $rootScope, $filter, $modal,
     {'label': currentApp.name, 'href': '#/applications/' + currentApp.id},
     {'label': 'Clients', 'href': '#/applications/' + currentApp.id + '/application-clients'}
   ];
+
+  $scope.createdId = $routeParams.created;
 
   $scope.namePrefix = 'liveoak.client.' + currentApp.id + '.';
 
@@ -717,7 +719,7 @@ loMod.controller('AppClientCtrl', function($scope, $rootScope, $filter, $route, 
       $route.reload();
     }
     else {
-      $location.path('applications/' + currentApp.name + '/application-clients/' + $scope.appClient.name);
+      $location.search('created', $scope.appClient.name).path('applications/' + currentApp.name + '/application-clients');
     }
   };
 });

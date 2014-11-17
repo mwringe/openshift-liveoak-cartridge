@@ -410,6 +410,9 @@ input[type=number].no-spinner::-webkit-outer-spin-button {
 .panel .panel-heading .pull-right a:hover {
   color: #459656;
 }
+.panel .panel-heading .pull-right a + a {
+  margin-left: 10px;
+}
 .panel .panel-heading .pull-right span {
   margin-top: 4px;
   display: inline-block;
@@ -422,7 +425,7 @@ input[type=number].no-spinner::-webkit-outer-spin-button {
 }
 .panel .panel-heading .dropdown,
 .panel .panel-heading .pull-right > a {
-  display: block;
+  display: inline-block;
   margin-top: 8px;
 }
 .panel .panel-heading .dropdown .dropdown-toggle > b,
@@ -471,6 +474,7 @@ input[type=number].no-spinner::-webkit-outer-spin-button {
 .panel .panel-body .lo-app-opts li a:hover {
   color: #666666;
 }
+.panel .panel-body .lo-app-opts li.empty,
 .panel .panel-body .lo-app-opts li.empty a,
 .panel .panel-body .lo-app-opts li.empty a:hover {
   color: #e8e8e8;
