@@ -9,28 +9,34 @@
         "directory" : "${application.dir}/console"
       }
     },
+
     "client" : {
       "type" : "aggregating-filesystem",
       "config" : {
         "directory" : "${io.liveoak.js.dir}"
       }
     },
+
     "auth" : {
       "type" : "keycloak"
     },
+
     "authz" : {
       "type" : "security",
       "config" : {
-        "policies" : [ {
-          "policyName" : "URIPolicy",
-          "policyResourceEndpoint" : "/admin/uri-policy/authzCheck"
-        } ]
+        "policies" : [
+          {
+            "policyName" : "URIPolicy",
+            "policyResourceEndpoint" : "/admin/uri-policy/authzCheck"
+          }
+        ]
       }
     },
+
     "uri-policy" : {
       "type" : "uri-policy",
       "config" : {
-        "rules" : [ {
+        "rules" : [{
           "uriPattern" : "/admin",
           "requestTypes" : [ "READ" ],
           "allowedUsers" : [ "*" ]
@@ -46,12 +52,8 @@
           "uriPattern" : "/admin/client*",
           "requestTypes" : [ "READ" ],
           "allowedUsers" : [ "*" ]
-        } ]
+        }]
       }
-    },
-    "application-clients" : {
-      "type" : "application-clients",
-      "config" : { }
     }
   }
 }
