@@ -35,6 +35,11 @@
             <artifactId>liveoak-common</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>io.liveoak</groupId>
+            <artifactId>liveoak-security-uripolicy</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>io.liveoak</groupId>
