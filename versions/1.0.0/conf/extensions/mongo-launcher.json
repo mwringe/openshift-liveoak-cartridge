@@ -1,6 +1,11 @@
 {
   "module-id" : "io.liveoak.mongo-launcher",
   "config" : {
-    "enabled" : "false"
+    "enabled" : "auto",
+    "log-path" : "${io.liveoak.home.dir}/data/mongod.log",
+    "pid-file-path" : "${io.liveoak.home.dir}/data/mongod.pid",
+    "db-path" : "${io.liveoak.home.dir}/data",
+    "use-small-files" : true,
+    "mongod-path" : "/usr/bin/mongod"
   }
 }
