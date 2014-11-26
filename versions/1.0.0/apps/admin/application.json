@@ -54,6 +54,12 @@
           "allowedUsers" : [ "*" ]
         }]
       }
+    },
+    "https-redirect" : {
+      "type" : "https-redirect",
+      "config" : {
+        "redirects" : "ALL"
+      }
     }
   }
 }

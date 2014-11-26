@@ -2,7 +2,7 @@
 
 var loMod = angular.module('loApp.controllers.storage', []);
 
-loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $routeParams, $log, LoStorage, loStorage, Notifications, currentApp) {
+loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $routeParams, $log, $filter, LoStorage, loStorage, loDatastores, Notifications, currentApp) {
 
   $log.debug('StorageCtrl');
 
@@ -23,10 +23,30 @@ loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $routePa
   $scope.create = true;
   $scope.fix = $routeParams.fix;
 
+  $scope.datastores = loDatastores.members;
+
   if (loStorage.id){
     $scope.create = false;
-    if (loStorage.credentials.length === 0 ){
+    if (loStorage.credentials && loStorage.credentials.length === 0 ){
       loStorage.credentials = [{'mechanism':'MONGODB-CR'}];
+    }
+    if (loStorage.datastore) {
+      var ds = $filter('filter')($scope.datastores, {id: loStorage.datastore})[0];
+      loStorage.servers = [{
+        host: ds.servers[0].host,
+        port: ds.servers[0].port
+      }];
+      if (ds.credentials[0]) {
+        loStorage.credentials = [{
+          mechanism:'MONGODB-CR',
+          username: ds.credentials[0].username,
+          password: ds.credentials[0].password,
+          database: ds.credentials[0].database
+        }];
+      }
+      else {
+        loStorage.credentials = [{ mechanism:'MONGODB-CR' }];
+      }
     }
     $scope.breadcrumbs.push(
       {'label': loStorage.id, 'href':'#/applications/' + currentApp.id + '/storage/' + loStorage.id},
@@ -39,6 +59,22 @@ loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $routePa
 
   var storageModelBackup = angular.copy(loStorage);
   $scope.storageModel = angular.copy(loStorage);
+
+  $scope.selectDatastore = function(ds) {
+    $scope.storageModel.datastore = ds.id;
+    $scope.storageModel.servers = [{
+      host: ds.servers[0].host,
+      port: ds.servers[0].port
+    }];
+    if (ds.credentials[0]) {
+      $scope.storageModel.credentials = [{
+        username: ds.credentials[0].username,
+        password: ds.credentials[0].password,
+        database: ds.credentials[0].database
+      }];
+    }
+  };
+
 
   $scope.passwordInputType = 'password';
   $scope.changePasswordInputType = function() {
@@ -70,85 +106,98 @@ loMod.controller('StorageCtrl', function($scope, $rootScope, $location, $routePa
 
   $scope.save = function(){
 
-    var unameSet = ($scope.storageModel.credentials[0].hasOwnProperty('username') && $scope.storageModel.credentials[0].username !== '');
-    var paswdSet = ($scope.storageModel.credentials[0].hasOwnProperty('password') && $scope.storageModel.credentials[0].password !== '');
+    var data = {
+      id: $scope.storageModel.id,
+      type: $scope.storageModel.type,
+      config: {}
+    };
 
-    if ((unameSet && !paswdSet)||(!unameSet && paswdSet)) {
+    if ($scope.storageModel.datastore) {
+      data.config = {
+        db: $scope.storageModel.db,
+        datastore: $scope.storageModel.datastore
+      };
+    }
+    else {
+      var unameSet = ($scope.storageModel.credentials[0].hasOwnProperty('username') && $scope.storageModel.credentials[0].username !== '');
+      var paswdSet = ($scope.storageModel.credentials[0].hasOwnProperty('password') && $scope.storageModel.credentials[0].password !== '');
 
-      Notifications.error('Please fill in both the username and password fields.');
-    } else {
+      if ((unameSet && !paswdSet)||(!unameSet && paswdSet)) {
 
-      var credentials = [];
-
-      // Send the credentials data only if username or password was set
-      if ($scope.storageModel.credentials.length > 0 &&
-        ($scope.storageModel.credentials[0].username || $scope.storageModel.credentials[0].password)) {
-
-        $log.debug('Credentials were set');
-        credentials.push(
-          { mechanism:'MONGODB-CR',
-            username: $scope.storageModel.credentials[0].username,
-            password: $scope.storageModel.credentials[0].password,
-            database: $scope.storageModel.db
-          }
-        );
+        Notifications.error('Please fill in both the username and password fields.');
+        return;
       }
+      else {
 
-      var data = {
-        id: $scope.storageModel.id,
-        type: $scope.storageModel.type,
-        config: {
+        var credentials = [];
+
+        // Send the credentials data only if username or password was set
+        if ($scope.storageModel.credentials.length > 0 &&
+          ($scope.storageModel.credentials[0].username || $scope.storageModel.credentials[0].password)) {
+
+          $log.debug('Credentials were set');
+          credentials.push(
+            {
+              mechanism: 'MONGODB-CR',
+              username: $scope.storageModel.credentials[0].username,
+              password: $scope.storageModel.credentials[0].password,
+              database: $scope.storageModel.credentials[0].database || $scope.storageModel.db
+            }
+          );
+        }
+
+        data.config = {
           db: $scope.storageModel.db,
           servers: $scope.storageModel.servers,
           credentials: credentials
-        }
-      };
-
-      // Create new storage resource
-      if ($scope.create){
-        $log.debug('Creating new storage resource: ' + data.id);
-        LoStorage.create({appId: $scope.curApp.id}, data,
-          // success
-          function(/*value, responseHeaders*/) {
-            Notifications.success('The storage "' + data.id + '" has been created.');
-            storageModelBackup = angular.copy($scope.storageModel);
-            $scope.changed = false;
-            $location.search('created', $scope.storageModel.id).path('applications/' + currentApp.id + '/storage');
-          },
-          // error
-          function(httpResponse) {
-            Notifications.httpError('Failed to create the storage "' + data.id + '".', httpResponse);
-          });
+        };
       }
-      // Update the storage resource
-      else {
-        $log.debug('Updating storage resource: ' + $scope.storageModel.id);
+    }
 
-        if (($scope.storageModel.credentials[0].username === '' && $scope.storageModel.credentials[0].password === '') ||
-            (!$scope.storageModel.credentials[0].hasOwnProperty('username') && !$scope.storageModel.credentials[0].hasOwnProperty('password'))) {
-
-          $scope.storageModel.credentials = [];
-        } else {
-          $scope.storageModel.credentials[0].database = $scope.storageModel.db;
-        }
-
-        LoStorage.update({appId: $scope.curApp.id, storageId: storageModelBackup.id}, $scope.storageModel,
-        function(){
-          // Update success
-          Notifications.success('The storage "' + storageModelBackup.id + '" has been updated.');
-          $location.path('applications/' + currentApp.id + '/storage');
+    // Create new storage resource
+    if ($scope.create){
+      $log.debug('Creating new storage resource: ' + data.id);
+      LoStorage.create({appId: $scope.curApp.id}, data,
+        // success
+        function(/*value, responseHeaders*/) {
+          Notifications.success('The storage "' + data.id + '" has been created.');
+          storageModelBackup = angular.copy($scope.storageModel);
+          $scope.changed = false;
+          $location.search('created', $scope.storageModel.id).path('applications/' + currentApp.id + '/storage');
         },
-        function(httpResponse){
-          // Update failure
-          Notifications.httpError('Failed to update the storage "' + storageModelBackup.id + '".', httpResponse);
+        // error
+        function(httpResponse) {
+          Notifications.httpError('Failed to create the storage "' + data.id + '".', httpResponse);
         });
+    }
+    // Update the storage resource
+    else {
+      $log.debug('Updating storage resource: ' + $scope.storageModel.id);
+
+      if (($scope.storageModel.credentials[0].username === '' && $scope.storageModel.credentials[0].password === '') ||
+          (!$scope.storageModel.credentials[0].hasOwnProperty('username') && !$scope.storageModel.credentials[0].hasOwnProperty('password'))) {
+
+        $scope.storageModel.credentials = [];
+      } else {
+        $scope.storageModel.credentials[0].database = $scope.storageModel.db;
       }
+
+      LoStorage.update({appId: $scope.curApp.id, storageId: storageModelBackup.id}, $scope.storageModel,
+      function(){
+        // Update success
+        Notifications.success('The storage "' + storageModelBackup.id + '" has been updated.');
+        $location.path('applications/' + currentApp.id + '/storage');
+      },
+      function(httpResponse){
+        // Update failure
+        Notifications.httpError('Failed to update the storage "' + storageModelBackup.id + '".', httpResponse);
+      });
     }
   };
 
 });
 
-loMod.controller('StorageListCtrl', function($scope, $rootScope, $log, $routeParams, loStorageList, currentApp,
+loMod.controller('StorageListCtrl', function($scope, $rootScope, $log, $routeParams, loStorageList, loDatastores, currentApp,
                                              LoStorage, Notifications, $modal, $filter) {
 
   $log.debug('StorageListCtrl');
@@ -165,6 +214,8 @@ loMod.controller('StorageListCtrl', function($scope, $rootScope, $log, $routePar
 
   $scope.loStorageList=loStorageList;
 
+  $scope.datastores = loDatastores.members;
+
   $scope.storageId = '';
 
   $scope.resources = [];
@@ -179,8 +230,9 @@ loMod.controller('StorageListCtrl', function($scope, $rootScope, $log, $routePar
         $scope.resources.push({
           provider: 'mongoDB',
           path: resource.id,
-          host: resource.servers[0].host,
-          port: resource.servers[0].port,
+          datastore: resource.datastore,
+          host: resource.servers ? resource.servers[0].host : '',
+          port: resource.servers ? resource.servers[0].port : '',
           database: resource.db
         });
       }
@@ -263,8 +315,7 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
   } else {
     $scope.breadcrumbs.push({'label': 'Collections',    'href':''});
   }
-
-  $scope.collectionList = currentCollectionList.members;
+  $scope.collectionList = currentCollectionList.live.members;
 
   $scope.collectionData = [];
   $scope.collectionDataBackup = [];
@@ -564,7 +615,7 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
 
     deletePromise.then(function(){
       Notifications.success('The collection "' + $scope.collectionId + '" has been deleted.');
-      loadCollectionList(selectFirst);
+      selectFirst();
     }, function() {
       Notifications.error('Failed to delete the collection "' + $scope.collectionId + '".');
     });
@@ -641,14 +692,7 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
     if ($scope.columnNew !== '') {
       $scope.columns.push(columnName);
     }
-/*
-    // Commenting because the empty string is not the same as no value.
-    for (var k in $scope.collectionData){
-      var item = $scope.collectionData[k];
-      item[columnName] = '';
-    }
-*/
-    $scope.isDataChange = true;
+
     $scope.isColumnChange = true;
   };
 
@@ -661,12 +705,12 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
 
       for (var k in $scope.collectionData) {
         var item = $scope.collectionData[k];
-        if (item.hasOwnProperty(columnName)) {
-          item[columnName] = null;
+        if (item.hasOwnProperty(columnName) && item[columnName] !== '') {
+          item[columnName] = '';
+          $scope.isDataChange = true;
         }
       }
 
-      $scope.isDataChange = true;
       $scope.isColumnChange = true;
     }
   };
@@ -958,17 +1002,6 @@ loMod.controller('StorageCollectionCtrl', function($scope, $rootScope, $log, $ro
   }
 
   $scope.isValidJSON = loJSON.isValidJSON;
-
-  function loadCollectionList(callback) {
-    $log.debug('Loading collection list');
-    var promise = LoCollection.getList({appId: currentApp.id, storageId: $routeParams.storageId});
-    promise.$promise.then(function (data) {
-      $scope.collectionList = data.members;
-      if (callback) {
-        callback();
-      }
-    });
-  }
 
   function resetEnv(){
     $scope.isColumnChange = false;

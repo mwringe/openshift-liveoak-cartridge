@@ -867,6 +867,10 @@ form .form-group.multiple > div:last-child {
 .applications .bootstrap-select.btn-group[class*="span"] {
   margin-bottom: 0;
 }
+.bootstrap-select.btn-group .dropdown-menu > .active > a:hover {
+  background-color: #63b474 !important;
+  border-color: #459656 !important;
+}
 .bootstrap-select.btn-group.show-tick .dropdown-menu li.selected a i.check-mark {
   font-family: 'FontAwesome';
   margin-top: 5px;

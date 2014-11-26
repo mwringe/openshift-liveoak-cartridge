@@ -48,9 +48,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
       controller: 'HomeCtrl',
       resolve: {
         loAppList : function(loLiveLoader, LoLiveAppList, $filter, $location, $q) {
-          var livePromise = loLiveLoader(LoLiveAppList.getList);
+          var livePromise = loLiveLoader(LoLiveAppList.getList, '/admin/applications/');
           livePromise.then(function(loAppList){
-            var filtered = $filter('filter')(loAppList.members, {'visible': true});
+            var filtered = $filter('filter')(loAppList.resource.members, {'visible': true});
             if (filtered.length === 1) {
               $location.url('/applications/' + filtered[0].id);
             }
@@ -72,7 +72,7 @@ loMod.config(['$routeProvider', function($routeProvider) {
       controller : 'AppListCtrl',
       resolve: {
         loAppList : function(loLiveLoader, LoLiveAppList) {
-          return loLiveLoader(LoLiveAppList.getList);
+          return loLiveLoader(LoLiveAppList.getList, '/admin/applications/');
         },
         examplesList : function(LoAppExamples) {
           return LoAppExamples.query().$promise;
@@ -87,7 +87,7 @@ loMod.config(['$routeProvider', function($routeProvider) {
           return LoAppExamples.query().$promise;
         },
         loAppList : function(loLiveLoader, LoLiveAppList) {
-          return loLiveLoader(LoLiveAppList.getList);
+          return loLiveLoader(LoLiveAppList.getList, '/admin/applications/');
         }
       }
     })
@@ -484,6 +484,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
         loStorageList : function(LoStorageListLoader) {
           return new LoStorageListLoader();
         },
+        loDatastores : function(LoStorage) {
+          return LoStorage.getDatastores().$promise;
+        },
         currentApp: function(LoAppLoader){
           return new LoAppLoader();
         }
@@ -496,6 +499,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
         loStorage : function() {
           return {'type':'mongo','servers':[{}],'credentials':[{'mechanism':'MONGODB-CR'}]};
         },
+        loDatastores : function(LoStorage) {
+          return LoStorage.getDatastores().$promise;
+        },
         currentApp: function(LoAppLoader){
           return new LoAppLoader();
         }
@@ -507,6 +513,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
       resolve : {
         loStorage: function(LoStorageLoader) {
           return new LoStorageLoader();
+        },
+        loDatastores : function(LoStorage) {
+          return LoStorage.getDatastores().$promise;
         },
         currentApp: function(LoAppLoader){
           return new LoAppLoader();
@@ -538,8 +547,10 @@ loMod.config(['$routeProvider', function($routeProvider) {
         currentApp: function(LoAppLoader){
           return new LoAppLoader();
         },
+
         currentCollectionList: function(loLiveLoader, LoLiveCollectionList, $route){
-          return loLiveLoader(LoLiveCollectionList.get, {appId : $route.current.params.appId,storageId : $route.current.params.storageId});
+          var url = '/'+$route.current.params.appId+'/'+$route.current.params.storageId+'/';
+          return loLiveLoader(LoLiveCollectionList.get, url, {appId : $route.current.params.appId,storageId : $route.current.params.storageId});
         }
       },
       templateUrl: '/admin/console/partials/storage-collection.html'
@@ -550,8 +561,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
         currentApp: function(LoAppLoader){
           return new LoAppLoader();
         },
-        currentCollectionList: function(LoCollectionListLoader){
-          return new LoCollectionListLoader();
+        currentCollectionList: function(loLiveLoader, LoLiveCollectionList, $route){
+          var url = '/'+$route.current.params.appId+'/'+$route.current.params.storageId+'/';
+          return loLiveLoader(LoLiveCollectionList.get, url, {appId : $route.current.params.appId,storageId : $route.current.params.storageId});
         }
       },
       templateUrl: '/admin/console/partials/storage-collection.html'
