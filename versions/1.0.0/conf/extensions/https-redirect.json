@@ -2,7 +2,7 @@
     module-id:  'io.liveoak.redirect.https',
     config: {
       default: {
-        redirects: 'NONE',
+        redirects: 'SECURED',
         redirect-type: 'TEMPORARY',
         max-age: 300
       }
