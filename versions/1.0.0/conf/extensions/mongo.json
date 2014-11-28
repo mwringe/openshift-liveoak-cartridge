@@ -2,6 +2,7 @@
     module-id:  'io.liveoak.mongo',
     dependencies: ['mongo-launcher'],
     config: {
+       "name" : "Default Datastore",
        "servers" : [ {
           "host" : "${liveoak.mongo.host:127.0.0.1}",
           "port" : "${liveoak.mongo.port:27017}"
