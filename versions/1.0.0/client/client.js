@@ -102,7 +102,7 @@ var LiveOak = function( options ) {
 
         if (!options.auth.url) {
             var scheme = options.secure ? 'https://' : 'http://';
-            if (typeof LIVEOAK_SECURE_AUTH_CONNECTION != 'undefined' && LIVEOAK_SECURE_AUTH_CONNECTION) {
+            if (typeof LIVEOAK_DEFAULT_SECURE_AUTH_CONNECTION != 'undefined' && LIVEOAK_DEFAULT_SECURE_AUTH_CONNECTION) {
               scheme = 'https://';
             }
             options.auth.url = scheme + options.host + (options.port ? ':' + options.port : '') + '/auth';
