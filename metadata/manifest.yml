@@ -105,6 +105,7 @@ Endpoints:
    - Private-IP-Name:   IP
      Private-Port-Name: LIVEOAK_INTERNAL_PORT
      Private-Port:      18383
+     Public-Port-Name: LIVEOAK_PROXY_INTERNAL_PORT
 #     Mappings:
 #     - Options:
 #        noproxy: true
