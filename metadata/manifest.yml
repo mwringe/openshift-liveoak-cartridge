@@ -102,10 +102,15 @@ Endpoints:
       Backend: ''
       Options:
         health: true
-  - Private-IP-Name:   IP
-    Private-Port-Name: INTERNAL_PORT
-    Private-Port:      18383
-    Public-Port-Name:  PROXY_INTERNAL_PORT
+  - Private-IP-Name:     IP
+    Private-Port-Name: CLUSTER_PORT
+    Private-Port: 7600
+    Public-Port-Name: CLUSTER_PROXY_PORT
+#
+#  - Private-IP-Name:   IP
+#    Private-Port-Name: INTERNAL_PORT
+#    Private-Port:      18383
+#    Public-Port-Name:  PROXY_INTERNAL_PORT
 #     Mappings:
 #     - Options:
 #        noproxy: true
