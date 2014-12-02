@@ -106,6 +106,9 @@ Endpoints:
     Private-Port-Name:   INTERNALPORT
     Private-Port: 18383
     Public-Port-Name: INTERNAL_PROXY_PORT
+    Mappings:
+    - Options:
+        forbidden: true
 #
 #  - Private-IP-Name:   IP
 #    Private-Port-Name: INTERNAL_PORT
