@@ -104,7 +104,7 @@ Endpoints:
         health: true
   - Private-IP-Name:     IP
     Private-Port-Name:   INTERNALPORT
-    Private-Port: 7600
+    Private-Port: 18383
     Public-Port-Name: INTERNAL_PROXY_PORT
 #
 #  - Private-IP-Name:   IP
