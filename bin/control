@@ -70,11 +70,13 @@ function reload() {
 }
 
 function tidy() {
-    echo "Tidy"
+    echo "Tidying"
+    echo "  Removing the logs"
+    rm -rf $OPENSHIFT_LIVEOAK_LOG_DIR/*
 }
 
 function deploy() {
-echo "Deploying and managing applications via the openshift git is not currently supported"
+    echo "Deploying and managing applications via the openshift git is not currently supported"
 }
 
 
