@@ -1,7 +1,7 @@
 Name: liveoak
 Cartridge-Short-Name: LIVEOAK
 Display-Name: LiveOak BaaS 1.0.0.Beta02-SNAPSHOT
-Description: "The opensource RESTful backend-as-a-service stack"
+Description: "The opensource mobile services platform."
 Version: '1.0.0'
 License: EPL
 License-Url: http://www.eclipse.org/legal/epl-v10.html
@@ -60,28 +60,28 @@ Provides:
 #  - java-1.8.0
 Requires:
   - mongodb-2.4
-Publishes:
-  publish-http-url:
-    Type: "NET_TCP:httpd-proxy-info"
-  publish-liveoak-cluster:
-    Type: NET_TCP:liveoak-cluster-info
-Subscribes:
-  set-env:
-    Type: "ENV:*"
-    Required: false
-  set-mysql-connection-info:
-    Type: "NET_TCP:db:mysql"
-    Required : false
-  set-postgres-connection-info:
-    Type: "NET_TCP:db:postgres"
-    Required : false
-  set-doc-url:
-    Type: "STRING:urlpath"
-    Required : false
-  set-generic-java:
-    Type: "ENV:NET_TCP:generic-java"
-  set-liveoak-cluster:
-    Type: NET_TCP:liveoak-cluster-info
+#Publishes:
+#  publish-http-url:
+#    Type: "NET_TCP:httpd-proxy-info"
+#  publish-liveoak-cluster:
+#    Type: NET_TCP:liveoak-cluster-info
+#Subscribes:
+#  set-env:
+#    Type: "ENV:*"
+#    Required: false
+#  set-mysql-connection-info:
+#    Type: "NET_TCP:db:mysql"
+#    Required : false
+#  set-postgres-connection-info:
+#    Type: "NET_TCP:db:postgres"
+#    Required : false
+#  set-doc-url:
+#    Type: "STRING:urlpath"
+#    Required : false
+#  set-generic-java:
+#    Type: "ENV:NET_TCP:generic-java"
+#  set-liveoak-cluster:
+#    Type: NET_TCP:liveoak-cluster-info
 Scaling:
   Min: 1
   Max: 1
