@@ -14,6 +14,8 @@ snapshot_exclusions:
 - ~/liveoak/versions/1.0.0/README.txt
 - ~/liveoak/versions/1.0.0/standalone
 - ~/liveoak/versions/1.0.0/welcome-content
+- ~/liveoak/openjdk
+- ~/liveoak/env
 locked_files:
 #- bin/
 #- bin/*
