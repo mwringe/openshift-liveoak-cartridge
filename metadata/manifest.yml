@@ -102,9 +102,9 @@ Endpoints:
       Backend: ''
       Options:
         health: true
-#   - Private-IP-Name:   IP
-#     Private-Port-Name: LIVEOAK_INTERNAL_PORT
-#     Private-Port:      18383
+   - Private-IP-Name:   IP
+     Private-Port-Name: LIVEOAK_INTERNAL_PORT
+     Private-Port:      18383
 #     Mappings:
 #     - Options:
 #        noproxy: true
