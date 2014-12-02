@@ -1,6 +1,19 @@
 ---
 snapshot_exclusions:
-- ~/liveoak/versions/**/**/*
+#basically all we want in a snapshot is files associated with LiveOak applications
+# eg: apps, client, conf
+- ~/liveoak/versions/1.0.0/appclient
+- ~/liveoak/versions/1.0.0/bin
+- ~/liveoak/versions/1.0.0/docs
+- ~/liveoak/versions/1.0.0/copyright.txt
+- ~/liveoak/versions/1.0.0/domain
+- ~/liveoak/versions/1.0.0/jboss-modules.jar
+- ~/liveoak/versions/1.0.0/LICENSE.txt
+- ~/liveoak/versions/1.0.0/m2-repo
+- ~/liveoak/versions/1.0.0/modules
+- ~/liveoak/versions/1.0.0/README.txt
+- ~/liveoak/versions/1.0.0/standalone
+- ~/liveoak/versions/1.0.0/welcome-content
 locked_files:
 #- bin/
 #- bin/*
