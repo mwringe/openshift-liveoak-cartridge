@@ -33,3 +33,5 @@ locked_files:
 #- env/M2_HOME
 processed_templates:
 - '**/*.erb'
+restore_transforms:
+- s|${OPENSHIFT_GEAR_NAME}/data|app-root/data|
