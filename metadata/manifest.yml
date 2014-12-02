@@ -14,37 +14,37 @@ Categories:
   - java
   - liveoak
 Website: http://www.liveoak.io
-Help-Topics:
+Hselp-Topics:
 Cart-Data:
   - Key: OPENSHIFT_LIVEOAK_LOG_DIR
     Type: environment
     Description: "Directory to store application log files."
-  - Key: OPENSHIFT_TMP_DIR
-    Type: environment
-    Description: "Directory to store application temporary files."
-  - Key: OPENSHIFT_REPO_DIR
-    Type: environment
-    Description: "Application root directory where application files reside. This directory is reset every time you do a git-push"
+#  - Key: OPENSHIFT_TMP_DIR
+#    Type: environment
+#    Description: "Directory to store application temporary files."
+#  - Key: OPENSHIFT_REPO_DIR
+#    Type: environment
+#    Description: "Application root directory where application files reside. This directory is reset every time you do a git-push"
   - Key: OPENSHIFT_LIVEOAK_HTTP_PORT
     Type: environment
     Description: "Internal port to which the web-framework binds to."
   - Key: OPENSHIFT_LIVEOAK_IP
     Type: environment
-  - Key: password
-    Type: cart_data
-    Description: The default admin password
-  - Key: username
-    Type: cart_data
-    Description: The admin's username
+#  - Key: password
+#    Type: cart_data
+#    Description: The default admin password
+#  - Key: username
+#    Type: cart_data
+#    Description: The admin's username
   - Key: OPENSHIFT_APP_DNS
     Type: environment
     Description: "Fully qualified domain name for the application."
   - Key: OPENSHIFT_APP_NAME
     Type: environment
     Description: "Application name"
-  - Key: OPENSHIFT_DATA_DIR
-    Type: environment
-    Description: "Directory to store application data files. Preserved across git-pushes. Not shared across gears."
+#  - Key: OPENSHIFT_DATA_DIR
+#    Type: environment
+#    Description: "Directory to store application data files. Preserved across git-pushes. Not shared across gears."
   - Key: OPENSHIFT_APP_UUID
     Type: environment
     Description: "Unique ID which identified the application. Does not change between gears."
