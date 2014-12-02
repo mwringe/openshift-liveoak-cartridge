@@ -102,8 +102,8 @@ Endpoints:
       Backend: ''
       Options:
         health: true
-  - Private-IP-Name:     IP
-    Private-Port-Name:   INTERNALPORT
+  - Private-IP-Name:     IP_INTERNAL
+    Private-Port-Name:   INTERNAL_PORT
     Private-Port: 18383
     Public-Port-Name: INTERNAL_PROXY_PORT
     Mappings:
@@ -111,7 +111,6 @@ Endpoints:
       Backend: ''
       Options:
         forbidden: true
-        noproxy: true
 #
 #  - Private-IP-Name:   IP
 #    Private-Port-Name: INTERNAL_PORT
