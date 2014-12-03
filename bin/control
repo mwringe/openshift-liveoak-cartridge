@@ -79,6 +79,21 @@ function deploy() {
     echo "Deploying and managing applications via the openshift git is not currently supported"
 }
 
+function pre-snapshot() {
+    echo "Preparing apps directory for snapshot"
+    mkdir $OPENSHIFT_DATA_DIR/liveoak/
+    cp -r $OPENSHIFT_LIVEOAK_DIR/versions/1.0.0/apps  $OPENSHIFT_DATA_DIR/liveoak/
+}
+
+functiopn post-restore() {
+    echo "Preparing to copy apps directory back to LiveOak install"
+    if [-e $OPENSHIFT_DATA_DIR/liveoak/apps]; then
+      rm -rf $OPENSHIFT_DATA_DIR/liveoak
+    fi
+
+    mv $OPENSHIFT_DATA_DIR/liveoak/apps $OPENSHIFT_DATA_DIR/liveoak
+    rmdir $OPENSHIFT_DATA_DIR/liveoak
+}
 
 case "$1" in
   start)     start ;;
@@ -88,5 +103,7 @@ case "$1" in
   reload)    reload ;;
   tidy)      tidy ;;
   deploy)    deploy ;;
+  pre-snapshot)    pre-snapshot ;;
+  post-restore)    post-restore ;;
   *)         exit 0
 esac
