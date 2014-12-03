@@ -4,7 +4,7 @@ source $OPENSHIFT_CARTRIDGE_SDK_BASH
 # generate the password
 echo "Generating the initial admin password for LiveOak"
 
-password=$OPENSHIFT_MONGODB_DB_PASSWORD
+password=`cat $OPENSHIFT_LIVEOAK_DIR/env/OPENSHIFT_LIVEOAK_PORT`
 
 client_result ""
 client_result "LiveOak Cartridge installed. Please make note of the credentials:"
