@@ -91,7 +91,7 @@ function post-restore() {
       rm -rf $OPENSHIFT_LIVEOAK_DIR/versions/1.0.0/apps
     fi
 
-    mv $OPENSHIFT_DATA_DIR/liveoak/apps $OPENSHIFT_LIVEOAK_DIR/liveoak/1.0.0
+    mv $OPENSHIFT_DATA_DIR/liveoak/apps $OPENSHIFT_LIVEOAK_DIR/versions/1.0.0
     rmdir $OPENSHIFT_DATA_DIR/liveoak
 }
 
