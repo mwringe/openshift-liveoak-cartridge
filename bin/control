@@ -85,7 +85,7 @@ function pre-snapshot() {
     cp -r $OPENSHIFT_LIVEOAK_DIR/versions/1.0.0/apps  $OPENSHIFT_DATA_DIR/liveoak/
 }
 
-functiopn post-restore() {
+function post-restore() {
     echo "Preparing to copy apps directory back to LiveOak install"
     if [-e $OPENSHIFT_DATA_DIR/liveoak/apps]; then
       rm -rf $OPENSHIFT_DATA_DIR/liveoak
