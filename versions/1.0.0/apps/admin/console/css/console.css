@@ -74,6 +74,20 @@ body {
   margin-bottom: -99999px;
   padding-bottom: 99999px;
 }
+/* Fix the background for Business Logic pages */
+.business-logic-create #lo-content-row {
+  display: flex;
+}
+.business-logic-create #lo-content-row > div {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+@media only screen and (min-width: 992px) {
+  .business-logic-create #lo-content-row > aside {
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+}
 /* Basic elements */
 h1,
 h2,
@@ -164,6 +178,9 @@ hr {
 }
 .ta-right {
   text-align: right;
+}
+.btn .fa {
+  margin-right: 5px;
 }
 /* Apply to make color slightly lighter */
 .lo-emph {
@@ -2003,6 +2020,16 @@ legend.collapsible.collapsed {
 /* Script list page */
 .business-logic-list .panel-title {
   margin-right: 15px;
+}
+/* Script edit page */
+.lo-form-horizontal .form-group > div.codemirror-top {
+  padding-left: 0;
+}
+.codemirror-top p {
+  margin-bottom: 10px;
+}
+.CodeMirror {
+  margin-top: 0!important;
 }
 /* */
 .lo-checkbox {

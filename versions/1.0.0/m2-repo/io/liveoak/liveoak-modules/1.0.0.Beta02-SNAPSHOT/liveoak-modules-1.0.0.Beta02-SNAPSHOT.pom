@@ -96,6 +96,7 @@
         <module>bootstrap</module>
         <module>spi</module>
         <module>stomp</module>
+        <module>jgit</module>
         <module>interceptor</module>
         <module>container</module>
         <module>wildfly</module>
@@ -119,5 +120,6 @@
         <module>scripts-scheduled</module>
         <module>ups</module>
         <module>https-redirect</module>
+        <module>application-clients</module>
     </modules>
 </project>
